@@ -16,8 +16,29 @@
   h1{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:2px;font-size:17px;color:var(--amber);text-transform:uppercase}
   h1 span{color:var(--teal)}
   .sub{color:var(--dim);font-size:11px;letter-spacing:1px}
-  .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}
-  @media(min-width:2400px){.layout{grid-template-columns:240px minmax(0,1fr)}}
+  .layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:10px;align-items:start}
+  /* ===== Kopfleisten-Steuerung ===== */
+  .layout{display:block}
+  .ctrlbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:flex-start}
+  .cbox{background:var(--panel);border:1px solid var(--line);min-width:0}
+  .cbox>summary{cursor:pointer;user-select:none;list-style:none;padding:7px 12px;font-family:'Chakra Petch',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--teal);white-space:nowrap}
+  .cbox>summary::-webkit-details-marker{display:none}
+  .cbox[open]{flex:1 1 340px}
+  .cbox[open]>summary{color:var(--amber);border-bottom:1px solid var(--line)}
+  .cboxbody{padding:10px 12px;max-height:62vh;overflow:auto}
+  .cbcols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .legbox h3{font-family:'Chakra Petch',sans-serif;color:var(--amber);font-size:10px;letter-spacing:1px;text-transform:uppercase;margin:10px 0 4px}
+  .legbox h3:first-child{margin-top:0}
+  .legbox p{font-size:10px;line-height:1.55;color:var(--dim);margin-bottom:4px}
+  .legbox b{color:var(--txt)}
+  /* Datenpanel volle Breite */
+  .layout>.panel{width:100%}
+
+  @media(min-width:1900px){
+    .datagrid{display:grid;grid-template-columns:minmax(440px,0.85fr) minmax(620px,1.15fr);gap:12px;align-items:start}
+    .datagrid .anaCol,.datagrid .mktCol{min-width:0}
+  }
+  @media(max-width:1899px){.datagrid{display:block}}
   @media(max-width:920px){.layout{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--line);padding:10px}
   .panel h2{font-family:'Chakra Petch',sans-serif;font-size:11px;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin:11px 0 7px;border-bottom:1px solid var(--line);padding-bottom:5px}
@@ -68,7 +89,7 @@
   .status b{color:var(--amber)}
   .bar{height:3px;background:var(--line);margin-bottom:16px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;background:var(--teal);transition:width .2s}
-  .recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:7px;margin-bottom:12px}
+  .recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px;margin-bottom:10px}
   .card{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--teal);padding:8px 10px}
   .card.star{border-left-color:var(--gold)}
   .card .v{font-family:'Chakra Petch',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--teal)}
@@ -116,29 +137,16 @@
   </header>
 
   <div class="layout">
-    <div class="leftcol">
-    <div class="panel">
-      <h2>Charakter (ESI · optional)</h2>
-      <div id="ssoOff">
-        <label data-tip="Public Client-ID deiner eigenen App von developers.eveonline.com (kein Secret). Dauerhaft: im Quelltext in der Zeile SSO_CLIENT_ID fest eintragen, dann entfällt das Feld.">Client-ID</label>
-        <input id="cid" placeholder="von developers.eveonline.com">
-        <div class="hint">Callback-URL für die App-Registrierung:<br><span class="k" id="cbUrl" style="word-break:break-all"></span></div>
-        <button id="ssoBtn" class="copybtn" style="width:100%;margin-top:8px;padding:9px">▶ Mit EVE einloggen</button>
-        <div class="hint" id="ssoWarn"></div>
-      </div>
-      <div id="ssoOn" style="display:none">
-        <div class="hint" id="ssoWho" style="color:var(--green)"></div>
-        <div class="hint" id="ssoFees"></div>
-        <button id="ordBtn" class="copybtn" style="width:100%;margin-top:6px;padding:9px">👁 Meine Orders prüfen</button>
-        <button id="pnlBtn" class="copybtn" style="width:100%;margin-top:6px;padding:9px">📊 P&amp;L auswerten (Wallet)</button>
-        <button id="invBtn" class="copybtn" style="width:100%;margin-top:6px;padding:9px">📦 Bestand laden (für Allokation)</button>
-        <div class="hint" id="invInfo"></div>
-        <button id="ssoOut" class="copybtn" style="width:100%;margin-top:6px;padding:7px">Logout</button>
-      </div>
-
-      <div class="tabs">
+<div class="ctrlbar">
+  <details class="cbox" id="cbItems" open>
+    <summary>① Items &amp; Scan</summary>
+    <div class="cboxbody"><div class="tabs">
         <button class="tab act" id="tabWl" data-pane="paneWl">★ Meine Liste</button>
         <button class="tab" id="tabCat" data-pane="paneCat">Katalog</button>
+      </div>
+      <div style="margin:0 0 10px">
+        <label data-tip="Meta-Filter für BEIDE Modi. Nichts vorausgewählt — mindestens eine Stufe wählen, sonst greift im Katalog kein Filter.">Meta-Stufe — bewusst wählen (Liste &amp; Katalog)</label>
+        <div class="chks" id="metaChks" style="margin-top:3px"></div>
       </div>
 
       <div class="tabpane act" id="paneWl">
@@ -155,20 +163,22 @@
       </div>
 
       <div class="tabpane" id="paneCat">
-        <div class="hint" style="margin-top:0">Volle Item-Welt nach Kategorie. Kategorie-Haken = ganze Gruppe; aufklappen für Feinauswahl.</div>
+        <div class="hint" style="margin-top:0">Nichts ist vorausgewählt — wähle bewusst, was du scannen willst. Kategorie-Haken = ganze Gruppe; aufklappen für Feinauswahl.</div>
         <div style="display:flex;gap:6px;margin:6px 0">
           <button id="catAll" class="copybtn" style="flex:1;padding:4px">Alle an</button>
           <button id="catNone" class="copybtn" style="flex:1;padding:4px">Alle aus</button>
-          <button id="catDef" class="copybtn" style="flex:1;padding:4px" data-tip="Sinnvolle Standardauswahl wiederherstellen">Standard</button>
         </div>
         <div id="catTree" style="margin-top:4px"></div>
-        <h2>Meta-Stufe</h2>
-        <div class="chks" id="metaChks"></div>
         <button id="scanCat" style="width:100%;margin-top:10px;background:var(--amber);color:#0a0a0a;border:none;font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:2px;font-size:14px;text-transform:uppercase;padding:12px;cursor:pointer">► KATALOG SCANNEN</button>
         <div class="cnt" id="cnt"></div>
       </div>
 
-      <h2>Handels-Basis (Heim-Hub)</h2>
+      </div>
+  </details>
+  <details class="cbox">
+    <summary>② Hubs &amp; Gebühren</summary>
+    <div class="cboxbody"><div class="cbcols">
+      <div>
       <label data-tip="Dein Haupthandelszentrum: hier kaufst/verkaufst du (Station-Trading), darauf bezieht sich die Markt-Tabelle, Bestand und P&L. Die übrigen 4 Hubs werden automatisch zu Arbitrage-Zielen. Bei Kampagnen-Rotation einfach umstellen.">Wo tradest du?</label>
       <select id="homeHub"></select>
       <div class="row2" style="margin-top:8px">
@@ -176,12 +186,19 @@
         <div><label data-tip="Verkaufssteuer an deiner Basis. Accounting V: 3,37 %.">Sales Tax %</label><input id="tax" type="number" step="0.01" value="3.37"></div>
       </div>
 
-      <h2>Ziel-Hubs</h2>
+      </div>
+      <div>
       <div class="hubgrid" id="hubGrid">
         <div></div><div class="hh">Hub</div><div class="hh" data-tip="Brokergebühr an diesem Hub. Militärkampagnen können sie dauerhaft ändern (z.B. Amarr ‚Blessed Exchange') — nach Kampagnen-Ende hier anpassen.">Broker %</div><div class="hh tipr" data-tip="Sales Tax an diesem Hub. Kampagnen-Ausgang kann sie senken/erhöhen — pro Saison (~120 Tage) prüfen und anpassen.">Tax %</div>
       </div>
 
-      <h2>Schwellen</h2>
+      </div>
+    </div></div>
+  </details>
+  <details class="cbox">
+    <summary>③ Schwellen &amp; Kapital</summary>
+    <div class="cboxbody"><div class="cbcols">
+      <div>
       <div class="row2">
         <div><label data-tip="Mindest-Sofort-Marge in %. Round-Trip-Kosten ~6,4 %, unter 7 % ist Flippen tot.">Min Sofort %</label><input id="minm" type="number" step="0.5" value="8"></div>
         <div><label data-tip="Mindestens so viele Stück/Tag müssen gehandelt werden (Ø letzte 5 Tage). Stufe 1 wirft alles darunter sofort raus.">Min-Vol/Tag</label><input id="minv" type="number" step="0.5" value="1"></div>
@@ -192,7 +209,8 @@
       </div>
       <label data-tip="Versteckt Items unter diesem Verkaufswert (in Mio ISK) aus Treffern/Allokation — filtert billiges Rauschen.">Min-Wert (M ISK)</label><input id="minw" type="number" step="1" value="0">
 
-      <h2>Kapital &amp; Hauling</h2>
+      </div>
+      <div>
       <div class="row2">
         <div><label data-tip="Dein Trading-Budget in Milliarden ISK. Wird score-gewichtet über die Treffer verteilt.">Kapital (Mrd)</label><input id="capital" type="number" step="0.5" value="10"></div>
         <div><label data-tip="Dein realistischer Anteil am Tagesvolumen eines Items. Morgen/Abend-Rhythmus ≈ 8–12 %. Bestimmt ISK/Tag und Abverkaufsdauer.">Capture %/Tag</label><input id="capture" type="number" step="1" value="10"></div>
@@ -202,7 +220,12 @@
         <div><label data-tip="Frachtraum deines Haulers in m³ (z.B. DST). Bestimmt Stück/Trip und Gewinn/Trip im Hauling-Panel.">Frachtraum (m³)</label><input id="cargo" type="number" step="1000" value="60000"></div>
       </div>
 
-      <h2>Makro (MER, monatlich)</h2>
+      </div>
+    </div></div>
+  </details>
+  <details class="cbox">
+    <summary>④ Makro (MER)</summary>
+    <div class="cboxbody">
       <label data-tip="Von Claude ausgewertete MER-Monate. Auswählen → alle Felder + Hotspot werden gesetzt und die Lage automatisch ausgewertet. Neue Monate kommen per Update dazu.">Ausgewerteter Monat laden</label>
       <select id="merMonth"><option value="">— Monat wählen —</option></select>
       <div class="row2" style="margin-top:8px">
@@ -224,9 +247,33 @@
       <button id="quick" disabled data-tip="Bepreist nur die aktuellen Treffer neu (Stufe 2). History/m³/Hub-Vol werden wiederverwendet — Morgen/Abend-Check in unter einer Minute.">↻ Quick-Rescan (Treffer)</button>
       <div class="hint">Stufe 1: Liquiditäts-Gate (30T-Verlauf). Stufe 2: Live-Preise Jita + aktive Hubs. Stufe 3: Packvolumen nur für Treffer. ESI-Drosselungen werden jetzt erkannt — der Scan pausiert dann global und macht automatisch weiter, statt Fehler zu produzieren.</div>
     </div>
+  </details>
+  <details class="cbox">
+    <summary>⑤ Charakter (ESI)</summary>
+    <div class="cboxbody">
+      <div id="ssoOff">
+        <label data-tip="Public Client-ID deiner eigenen App von developers.eveonline.com (kein Secret). Dauerhaft: im Quelltext in der Zeile SSO_CLIENT_ID fest eintragen, dann entfällt das Feld.">Client-ID</label>
+        <input id="cid" placeholder="von developers.eveonline.com">
+        <div class="hint">Callback-URL für die App-Registrierung:<br><span class="k" id="cbUrl" style="word-break:break-all"></span></div>
+        <button id="ssoBtn" class="copybtn" style="width:100%;margin-top:8px;padding:9px">▶ Mit EVE einloggen</button>
+        <div class="hint" id="ssoWarn"></div>
+      </div>
+      <div id="ssoOn" style="display:none">
+        <div class="hint" id="ssoWho" style="color:var(--green)"></div>
+        <div class="hint" id="ssoFees"></div>
+        <button id="ordBtn" class="copybtn" style="width:100%;margin-top:6px;padding:9px">👁 Meine Orders prüfen</button>
+        <button id="pnlBtn" class="copybtn" style="width:100%;margin-top:6px;padding:9px">📊 P&amp;L auswerten (Wallet)</button>
+        <button id="invBtn" class="copybtn" style="width:100%;margin-top:6px;padding:9px">📦 Bestand laden (für Allokation)</button>
+        <div class="hint" id="invInfo"></div>
+        <button id="ssoOut" class="copybtn" style="width:100%;margin-top:6px;padding:7px">Logout</button>
+      </div>
 
-    <div class="panel sidelegend">
-      <h2 style="cursor:pointer;user-select:none" id="legToggle">Legende &amp; Kürzel ▾</h2>
+      </div>
+  </details>
+  <details class="cbox">
+    <summary>ⓘ Legende</summary>
+    <div class="cboxbody legbox">
+      
       <div id="legBody">
       <p style="font-size:10px;color:var(--dim);line-height:1.6;margin-bottom:8px">Die meisten Felder erklären sich per Maus-Tooltip (gestrichelt unterstrichen). Hier nur, was Tooltips nicht zeigen:</p>
       <h3>Deadspace-Präfixe → Fraktion</h3>
@@ -242,10 +289,13 @@
       </div>
     </div>
     </div>
-
-    <div class="panel">
-      <div class="status" id="status">Bereit. „MARKTSCAN" prüft den gewählten Katalog live über die ESI-API.</div>
+  </details>
+</div>
+<div class="panel">
+      <div class="status" id="status">Bereit. Wähle „Liste" oder „Katalog" und scanne.</div>
       <div class="bar"><i id="prog"></i></div>
+      <div class="datagrid">
+      <div class="anaCol">
       <div id="pnlSec" style="display:none">
         <div class="secT"><span>P&amp;L — realisierter Gewinn (Wallet, FIFO)</span><span class="hint" id="pnlInfo" style="margin:0"></span></div>
         <div class="recs" id="pnlCards"></div>
@@ -330,7 +380,9 @@
         </table>
       </div>
 
-      <div class="secT teal" style="margin-top:22px">Markt-Tabelle</div>
+      </div><!-- /anaCol -->
+      <div class="mktCol">
+      <div class="secT teal" style="margin-top:0">Markt-Tabelle</div>
       <table id="tbl">
         <thead><tr>
           <th data-k="name" data-tip="Itemname (Meta-Stufe dahinter). Klick auf Spaltenköpfe sortiert.">Item</th>
@@ -350,9 +402,11 @@
         </tr></thead>
         <tbody id="body"></tbody>
       </table>
+      </div><!-- /mktCol -->
+      </div><!-- /datagrid -->
     </div>
 
-  </div>
+
 </div>
 
 <script>
@@ -398,7 +452,7 @@ function subId(c,g){return "sub_"+(c+"|"+g).replace(/\W/g,"_");}
 ALLCATS.forEach(c=>{
   const items=CATALOG.filter(x=>x.c===c);
   const groups=uniq(items.map(x=>x.g)).sort();
-  const on=DEFAULT_ON.has(c);
+  const on=false;  /* keine Voreinstellung — bewusst wählen */
   const det=document.createElement("details");det.className="catgrp";
   const sum=document.createElement("summary");
   sum.innerHTML='<input type="checkbox" id="'+catId(c)+'" '+(on?"checked":"")+'><span>'+c+'</span><span class="cc">'+items.length+'</span>';
@@ -427,7 +481,7 @@ ALLCATS.forEach(c=>{
   }));
 });
 ALLMETAS.forEach(m=>{
-  const on=(m==="Faction"||m==="Deadspace"||m==="T2"||m==="T1");
+  const on=false;  /* keine Voreinstellung */
   const w=document.createElement("div");w.className="chk";
   w.innerHTML='<input type="checkbox" id="meta_'+m+'" '+(on?"checked":"")+'><label for="meta_'+m+'">'+m+" ("+CATALOG.filter(c=>c.m===m).length+")</label>";
   $("metaChks").appendChild(w);
@@ -443,7 +497,7 @@ function setAllCats(mode){ /* mode: "all"|"none"|"default" */
 }
 $("catAll").addEventListener("click",()=>setAllCats("all"));
 $("catNone").addEventListener("click",()=>setAllCats("none"));
-$("catDef").addEventListener("click",()=>setAllCats("default"));
+
 (function(){const t=$("legToggle"),b=$("legBody");if(t&&b)t.addEventListener("click",()=>{const v=b.style.display==="none";b.style.display=v?"block":"none";t.innerHTML="Legende &amp; Kürzel "+(v?"▾":"▸");});})();
 function buildHubGrid(){
   const hg=$("hubGrid");
@@ -485,8 +539,9 @@ buildHubGrid();
 function activeHubs(){return HUBS().filter(h=>{const e=$("hub_"+h.key);return e&&e.checked;});}
 function selectedSubs(){const set=new Set();ALLCATS.forEach(c=>{uniq(CATALOG.filter(x=>x.c===c).map(x=>x.g)).forEach(g=>{const el=$(subId(c,g));if(el&&el.checked)set.add(c+"|"+g);});});return set;}
 function selectedMetas(){return new Set(ALLMETAS.filter(m=>$("meta_"+m).checked));}
-function universe(){const subs=selectedSubs(),ms=selectedMetas();return CATALOG.filter(c=>subs.has(c.c+"|"+c.g)&&(c.m===""||ms.has(c.m)||ms.size===0));}
-function updateCnt(){if($("cnt"))$("cnt").textContent=universe().length+" Items im Katalog-Scan";}
+function universe(){const subs=selectedSubs(),ms=selectedMetas();return CATALOG.filter(c=>subs.has(c.c+"|"+c.g)&&(c.m===""||ms.has(c.m)));}
+function updateCnt(){if($("cnt")){const n=universe().length;const ms=selectedMetas();const subs=selectedSubs();let warn="";if(subs.size>0&&ms.size===0&&n===0)warn=" — Meta-Stufe wählen!";$("cnt").textContent=n+" Items im Katalog-Scan"+warn;}}
+
 [...document.querySelectorAll("#metaChks input")].forEach(e=>e.addEventListener("change",updateCnt));
 updateCnt();
 /* ===== Tabs ===== */
@@ -529,22 +584,31 @@ function fmt(n){if(n==null||isNaN(n))return"–";const a=Math.abs(n);
 
 /* === ESI with global error-limit aware throttling === */
 let esiBlockUntil=0, throttleSec=0;
+/* Pause-Dauer wird gedeckelt: ESI-reset kann 60s sein, aber wir warten in kurzen
+   Häppchen und lassen NUR EINEN Worker als erstes wieder los (Staffelung), damit
+   das Error-Budget sich erholt statt sofort wieder leerzulaufen. */
+const sleepCap=ms=>sleep(Math.min(ms,8000));
 async function getJSON(url){
-  for(let att=0;att<7;att++){
-    const wait=esiBlockUntil-Date.now();
-    if(wait>0){throttleSec=Math.ceil(wait/1000);await sleep(wait);} throttleSec=0;
+  for(let att=0;att<12;att++){
+    let wait=esiBlockUntil-Date.now();
+    while(wait>0){throttleSec=Math.ceil((esiBlockUntil-Date.now())/1000);await sleepCap(wait);wait=esiBlockUntil-Date.now();}
+    throttleSec=0;
     let r;
-    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),15000);
+    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),20000);
     try{ r=await fetch(url,{signal:ctl.signal}); }
-    catch(e){ clearTimeout(to); await sleep(1200*(att+1)); continue; }
+    catch(e){ clearTimeout(to); await sleep(1000+800*att); continue; }
     clearTimeout(to);
     const remain=parseInt(r.headers.get("x-esi-error-limit-remain")||"100",10);
-    const reset=parseInt(r.headers.get("x-esi-error-limit-reset")||"10",10);
-    if(remain<10) esiBlockUntil=Math.max(esiBlockUntil,Date.now()+(reset+1)*1000);
+    let reset=parseInt(r.headers.get("x-esi-error-limit-reset")||"10",10);
+    if(reset>60)reset=60;
+    /* Budget wird knapp -> kurz global bremsen, aber höchstens reset Sekunden */
+    if(remain<25) esiBlockUntil=Math.max(esiBlockUntil,Date.now()+Math.min(reset+1,15)*1000);
     if(r.ok)return {data:await r.json(),pages:parseInt(r.headers.get("x-pages")||"1",10)};
     if(r.status===400||r.status===404)return {notMarket:true};
     if(r.status===420||r.status===429||r.status>=500){
-      esiBlockUntil=Math.max(esiBlockUntil,Date.now()+(reset+2)*1000);
+      /* echter Drossel-Treffer: warte reset, aber max 15s, mit kleinem Jitter gegen Worker-Synchronisation */
+      esiBlockUntil=Math.max(esiBlockUntil,Date.now()+Math.min(reset+1,15)*1000+Math.random()*500);
+      await sleepCap(800+600*att);
       continue;
     }
     return {notMarket:true};
@@ -888,6 +952,23 @@ async function quickScan(){
     hubs.forEach((h,i)=>{r["sell_"+h.key]=res[2+i].best;r["sellR_"+h.key]=res[2+i].robust;r["depth_"+h.key]=res[2+i].depth;});
     if(r.sell==null&&r.buy==null)r.illiquid=true;
   },8,n=>{$("prog").style.width=(n/Math.max(1,targets.length)*85)+"%";if(n%6===0)$("status").innerHTML="Quick-Rescan — <b>"+n+"/"+targets.length+"</b>"+thrNote();});
+  /* Übersprungene (ESI-Drossel) einmal automatisch nachholen */
+  let retry=rows.filter(r=>r.skipped&&r.id&&!r.illiquid);
+  if(retry.length){
+    await sleep(Math.max(0,esiBlockUntil-Date.now())+2000);
+    $("status").innerHTML="Hole "+retry.length+" übersprungene Items nach…";
+    await pool(retry,async r=>{
+      const tasks=[book(JITA.region,JITA.station,r.id,"sell"),book(JITA.region,JITA.station,r.id,"buy")];
+      hubs.forEach(h=>tasks.push(book(h.region,h.station,r.id,"sell")));
+      const res=await Promise.all(tasks);
+      if(res.some(x=>x.failed))return;
+      r.skipped=false;
+      r.sell=res[0].best;r.sellR=res[0].robust;r.compS=res[0].comp;r.depthS=res[0].depth;
+      r.buy=res[1].best;r.buyR=res[1].robust;r.compB=res[1].comp;r.depthB=res[1].depth;
+      hubs.forEach((h,i)=>{r["sell_"+h.key]=res[2+i].best;r["sellR_"+h.key]=res[2+i].robust;r["depth_"+h.key]=res[2+i].depth;});
+      if(r.sell==null&&r.buy==null)r.illiquid=true;
+    },4);
+  }
   compute();
   const top=rows.filter(r=>!r.err&&!r.skipped&&!r.illiquid&&(r.vclass==="star"||r.vclass==="buy"||(r.vclass==="watch"&&r.bestArb!=null&&r.bestArb>=6)))
     .sort((a,b)=>b.score-a.score).slice(0,30);
@@ -929,17 +1010,30 @@ async function runScan(seed,label){
   },12,n=>{$("prog").style.width=(n/valid.length*40)+"%";if(n%20===0)$("status").innerHTML="Stufe 1/3 — Liquidität: <b>"+n+"/"+valid.length+"</b>"+thrNote();});
   const liquid=valid.filter(r=>!r.illiquid&&!r.skipped);
   const hubs=activeHubs();
-  $("status").innerHTML="Stufe 2/3 — Live-Preise (Jita + "+hubs.length+" Hubs) für <b>"+liquid.length+"</b> Items…";
-  await pool(liquid,async r=>{
-    const tasks=[book(JITA.region,JITA.station,r.id,"sell"),book(JITA.region,JITA.station,r.id,"buy")];
-    hubs.forEach(h=>tasks.push(book(h.region,h.station,r.id,"sell")));
-    const res=await Promise.all(tasks);
-    if(res.some(x=>x.failed)){r.skipped=true;return;}
-    r.sell=res[0].best;r.sellR=res[0].robust;r.compS=res[0].comp;r.depthS=res[0].depth;
-    r.buy=res[1].best;r.buyR=res[1].robust;r.compB=res[1].comp;r.depthB=res[1].depth;
-    hubs.forEach((h,i)=>{r["sell_"+h.key]=res[2+i].best;r["sellR_"+h.key]=res[2+i].robust;r["depth_"+h.key]=res[2+i].depth;});
-    if(r.sell==null&&r.buy==null)r.illiquid=true;
-  },8,n=>{$("prog").style.width=(40+n/Math.max(1,liquid.length)*45)+"%";if(n%8===0)$("status").innerHTML="Stufe 2/3 — Preise: <b>"+n+"/"+liquid.length+"</b>"+thrNote();});
+  $("status").innerHTML="Stufe 2/3 — Live-Preise (Heim + "+hubs.length+" Hubs) für <b>"+liquid.length+"</b> Items…";
+  /* In Blöcken abarbeiten: schützt ESIs Error-Budget bei großen Universen (6000+ Items).
+     Zwischen Blöcken kurze Erholpause, damit das Budget nicht dauerhaft leerläuft. */
+  const BATCH=400;
+  let done2=0;
+  for(let bi=0;bi<liquid.length;bi+=BATCH){
+    const batch=liquid.slice(bi,bi+BATCH);
+    await pool(batch,async r=>{
+      const tasks=[book(JITA.region,JITA.station,r.id,"sell"),book(JITA.region,JITA.station,r.id,"buy")];
+      hubs.forEach(h=>tasks.push(book(h.region,h.station,r.id,"sell")));
+      const res=await Promise.all(tasks);
+      if(res.some(x=>x.failed)){r.skipped=true;return;}
+      r.sell=res[0].best;r.sellR=res[0].robust;r.compS=res[0].comp;r.depthS=res[0].depth;
+      r.buy=res[1].best;r.buyR=res[1].robust;r.compB=res[1].comp;r.depthB=res[1].depth;
+      hubs.forEach((h,i)=>{r["sell_"+h.key]=res[2+i].best;r["sellR_"+h.key]=res[2+i].robust;r["depth_"+h.key]=res[2+i].depth;});
+      if(r.sell==null&&r.buy==null)r.illiquid=true;
+    },6,n=>{done2=bi+n;$("prog").style.width=(40+done2/Math.max(1,liquid.length)*45)+"%";if(n%6===0)$("status").innerHTML="Stufe 2/3 — Preise: <b>"+done2+"/"+liquid.length+"</b>"+thrNote();});
+    /* Erholpause zwischen Blöcken, wenn noch mehr kommt */
+    if(bi+BATCH<liquid.length){
+      const pause=Math.max(0,esiBlockUntil-Date.now())+1500;
+      $("status").innerHTML="Stufe 2/3 — kurze Erholpause fürs ESI-Budget… (<b>"+done2+"/"+liquid.length+"</b>)";
+      await sleep(pause);
+    }
+  }
   compute();
   const top=rows.filter(r=>!r.err&&!r.skipped&&!r.illiquid&&(r.vclass==="star"||r.vclass==="buy"||(r.vclass==="watch"&&r.bestArb!=null&&r.bestArb>=6)))
     .sort((a,b)=>b.score-a.score).slice(0,30);
