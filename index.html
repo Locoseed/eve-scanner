@@ -10,19 +10,20 @@
 <style>
   :root{--bg:#070b0f;--panel:#0d141b;--panel2:#111b24;--line:#1d2c38;--txt:#c3d4de;--dim:#6f8493;--amber:#e8a13a;--teal:#3fb6b0;--green:#5fd07a;--red:#e06464;--gold:#f4c860;--grid:rgba(63,182,176,.05);}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:13px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:34px 34px;min-height:100vh;padding:18px;}
-  .wrap{max-width:1560px;margin:0 auto}
-  header{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
-  h1{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:3px;font-size:21px;color:var(--amber);text-transform:uppercase}
+  body{background:var(--bg);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:12px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:34px 34px;min-height:100vh;padding:10px 16px;}
+  .wrap{max-width:none;margin:0;width:100%}
+  header{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px;flex-wrap:wrap}
+  h1{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:2px;font-size:17px;color:var(--amber);text-transform:uppercase}
   h1 span{color:var(--teal)}
   .sub{color:var(--dim);font-size:11px;letter-spacing:1px}
-  .layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+  .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}
+  @media(min-width:2400px){.layout{grid-template-columns:240px minmax(0,1fr)}}
   @media(max-width:920px){.layout{grid-template-columns:1fr}}
-  .panel{background:var(--panel);border:1px solid var(--line);padding:16px}
-  .panel h2{font-family:'Chakra Petch',sans-serif;font-size:12px;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin:14px 0 10px;border-bottom:1px solid var(--line);padding-bottom:7px}
+  .panel{background:var(--panel);border:1px solid var(--line);padding:10px}
+  .panel h2{font-family:'Chakra Petch',sans-serif;font-size:11px;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin:11px 0 7px;border-bottom:1px solid var(--line);padding-bottom:5px}
   .panel h2:first-child{margin-top:0}
-  label{display:block;color:var(--dim);font-size:10px;letter-spacing:1px;text-transform:uppercase;margin:8px 0 4px}
-  input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 8px}
+  label{display:block;color:var(--dim);font-size:9px;letter-spacing:1px;text-transform:uppercase;margin:6px 0 3px}
+  input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:12px;padding:4px 7px}
   input:focus,textarea:focus{outline:none;border-color:var(--teal)}
   select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 8px}
   select:focus{outline:none;border-color:var(--teal)}
@@ -67,8 +68,8 @@
   .status b{color:var(--amber)}
   .bar{height:3px;background:var(--line);margin-bottom:16px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;background:var(--teal);transition:width .2s}
-  .recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:10px;margin-bottom:18px}
-  .card{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--teal);padding:11px 12px}
+  .recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:7px;margin-bottom:12px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--teal);padding:8px 10px}
   .card.star{border-left-color:var(--gold)}
   .card .v{font-family:'Chakra Petch',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--teal)}
   .card.star .v{color:var(--gold)}
@@ -77,13 +78,13 @@
   .card .tags{margin-top:7px;display:flex;flex-wrap:wrap;gap:4px}
   .tag{font-size:9px;letter-spacing:.5px;padding:2px 5px;background:var(--bg);border:1px solid var(--line);color:var(--dim)}
   .tag.g{color:var(--green);border-color:#274}.tag.a{color:var(--amber);border-color:#643}
-  .secT{font-family:'Chakra Petch',sans-serif;font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin:18px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .secT{font-family:'Chakra Petch',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin:12px 0 6px;border-bottom:1px solid var(--line);padding-bottom:5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
   .secT.teal{color:var(--teal)}
-  table{width:100%;border-collapse:collapse;font-size:12px}
-  th{font-family:'Chakra Petch',sans-serif;font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:9px;color:var(--dim);text-align:right;padding:8px 7px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;position:relative}
+  table{width:100%;border-collapse:collapse;font-size:11px;table-layout:auto}
+  th{font-family:'Chakra Petch',sans-serif;font-weight:600;letter-spacing:.3px;text-transform:uppercase;font-size:8.5px;color:var(--dim);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;position:relative}
   th:first-child,td:first-child{text-align:left}
   th:hover{color:var(--teal)}th.act{color:var(--amber)}
-  td{padding:6px 7px;border-bottom:1px solid #131e27;text-align:right;white-space:nowrap}
+  td{padding:2px 6px;border-bottom:1px solid #131e27;text-align:right;white-space:nowrap}
   tr:hover td{background:var(--panel2)}
   tr.sum td{border-top:1px solid var(--line);color:var(--amber);font-weight:700}
   .cat{color:var(--teal);font-family:'Chakra Petch',sans-serif;letter-spacing:1px;font-size:10px;text-transform:uppercase;padding-top:13px}
@@ -155,7 +156,12 @@
 
       <div class="tabpane" id="paneCat">
         <div class="hint" style="margin-top:0">Volle Item-Welt nach Kategorie. Kategorie-Haken = ganze Gruppe; aufklappen für Feinauswahl.</div>
-        <div id="catTree" style="margin-top:8px"></div>
+        <div style="display:flex;gap:6px;margin:6px 0">
+          <button id="catAll" class="copybtn" style="flex:1;padding:4px">Alle an</button>
+          <button id="catNone" class="copybtn" style="flex:1;padding:4px">Alle aus</button>
+          <button id="catDef" class="copybtn" style="flex:1;padding:4px" data-tip="Sinnvolle Standardauswahl wiederherstellen">Standard</button>
+        </div>
+        <div id="catTree" style="margin-top:4px"></div>
         <h2>Meta-Stufe</h2>
         <div class="chks" id="metaChks"></div>
         <button id="scanCat" style="width:100%;margin-top:10px;background:var(--amber);color:#0a0a0a;border:none;font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:2px;font-size:14px;text-transform:uppercase;padding:12px;cursor:pointer">► KATALOG SCANNEN</button>
@@ -214,64 +220,26 @@
 
       <div class="chk" style="margin-top:10px"><input type="checkbox" id="hidemiss" checked><label for="hidemiss">Nur Treffer zeigen (Nieten ausblenden)</label></div>
 
-      <label data-tip="Eigene Items: ein Eintrag pro Zeile, # = Kommentar. Type-IDs sind am zuverlässigsten (Namen via ESI können zicken); Klarnamen werden nach dem Scan angezeigt.">Zusätzliche Items</label>
-      <textarea id="extra"># Spezial (SDE-verifiziert)
-40520
-45635
-40519
-44992</textarea>
 
       <button id="quick" disabled data-tip="Bepreist nur die aktuellen Treffer neu (Stufe 2). History/m³/Hub-Vol werden wiederverwendet — Morgen/Abend-Check in unter einer Minute.">↻ Quick-Rescan (Treffer)</button>
       <div class="hint">Stufe 1: Liquiditäts-Gate (30T-Verlauf). Stufe 2: Live-Preise Jita + aktive Hubs. Stufe 3: Packvolumen nur für Treffer. ESI-Drosselungen werden jetzt erkannt — der Scan pausiert dann global und macht automatisch weiter, statt Fehler zu produzieren.</div>
     </div>
 
     <div class="panel sidelegend">
-      <h2>Legende</h2>
-      <h3>Hubs (SDE-verifiziert)</h3>
-      <p><b class="k">JITA</b> IV-4 CNAP · 60003760 · The Forge — Basis, hier wird gekauft.</p>
-      <p><b class="k">AMA</b> Amarr VIII · 60008494 · Domain</p>
-      <p><b class="k">DOD</b> Dodixie IX-20 · 60011866 · Sinq Laison</p>
-      <p><b class="k">REN</b> Rens VI-8 · 60004588 · Heimatar</p>
-      <p><b class="k">HEK</b> Hek VIII-12 · 60005686 · Metropolis</p>
+      <h2 style="cursor:pointer;user-select:none" id="legToggle">Legende &amp; Kürzel ▾</h2>
+      <div id="legBody">
+      <p style="font-size:10px;color:var(--dim);line-height:1.6;margin-bottom:8px">Die meisten Felder erklären sich per Maus-Tooltip (gestrichelt unterstrichen). Hier nur, was Tooltips nicht zeigen:</p>
+      <h3>Deadspace-Präfixe → Fraktion</h3>
+      <p>Coreli/Corelum/Core = Serpentis · Gistii/Gistum/Gist = Angel · Corpii/Corpum/Corpus = Blood · Centii/Centum/Centus = Sansha · Pithi/Pithum/Pith = Guristas. Qualität <b>X &gt; A &gt; B &gt; C</b>.</p>
+      <h3>HG-Implantat-Sets</h3>
+      <p>Amulet, Ascendancy, Asklepian, Crystal, Grail, Halo, Hydra, Jackal, Mimesis, Nirvana, Rapture, Savior, Snake, Spur, Talisman, Talon. („Slave" existiert nicht.)</p>
+      <h3>Symbole</h3>
+      <p><b class="avoid">⛔/⊘</b> Verlust / unhandelbar · <b style="color:var(--gold)">〜</b> volatil · <b style="color:var(--amber)">⚠</b> Top-Order-Falle · <b>KO→VO</b> Kauf→Verkauf-Einstellpreis.</p>
       <h3>Kampagnen-Rotation</h3>
-      <p>Militärkampagnen laufen <b>saisonal ≈120 Tage</b> (Saison 1: Juni–September). Ihr Ausgang kann <b>Hub-Gebühren dauerhaft ändern</b> (Amarr „Blessed Exchange": Erfolg = Senkung an Amarr VIII).</p>
-      <p>Darum: Broker/Tax <b>pro Hub editierbar</b> — nach Kampagnen-Ende anpassen, Arb-Rechnung stimmt sofort.</p>
-      <h3>Realisierbarkeit (wichtig!)</h3>
-      <p>Items mit <b>Buy-Top 0,01</b> (niemand kauft) oder einem einsamen <b>Sell-Top weit über Ø30T</b> (Fantasiepreis eines einzelnen Anbieters) sind <b class="avoid">⊘ UNHANDELBAR</b> — der Spread ist Illusion, du bekommst die Ware nie zu dem Preis los. Standardmäßig ausgeblendet.</p>
-      <p>Ranking erfolgt nach <b>ISK/Tag-Potenzial</b> (realer Netto-Gewinn/Stk × Tagesvolumen × Capture), nicht nach rohem Spread — das ist die Zahl, die Vermögen aufbaut.</p>
-      <h3>Spielweise: Station-Trading</h3>
-      <p><b>Sofort %</b> = schnelles Flippen (sofort kaufen/verkaufen). <b>Station %</b> = deine Spielweise: eigene Buy-Order an der Spitze, eigene Sell-Order an der Spitze, voller Spread minus 2× Broker + Tax.</p>
-      <p><b>Einstellen (KO→VO)</b>: konkrete Preise — Kauforder bei KO, Verkauforder bei VO — plus Netto-Gewinn/Stk. <b class="avoid">⛔ Verlust</b> = Spread deckt Gebühren nicht (die Skill-Injector-Falle). <b style="color:var(--gold)">〜 volatil</b> = große Tagesspanne, optimistischer Sell-Preis lohnt.</p>
-      <h3>Verdikte</h3>
-      <p><b class="star">★ STARK KAUFEN</b> — Marge ok, liquide, kein Abwärtstrend + billig vs. Ø oder Arb-Chance.</p>
-      <p><b class="buy">KAUFEN</b> — Marge ok, liquide, kein Abwärtstrend.</p>
-      <p><b class="watch">BEOBACHTEN</b> — knapp / dünn / fallend.</p>
-      <p><b class="avoid">MEIDEN</b> — Spread deckt Gebühren nicht (&lt; ~7 %).</p>
-      <p><b class="watch">ESI ✕</b> — von ESI gedrosselt übersprungen; erneuter Scan ergänzt.</p>
-      <h3>Orderbuch-Tiefe</h3>
-      <p><b>Marge %</b> ist volumengewichtet über die obersten ~5 % des Orderbuchs — nicht die nackte Top-Order. <b>⚠</b> = Top-Order-Falle: fetter Spread hängt an Mini-Orders.</p>
-      <p><b>Konk.</b> = Orders ≤2 % vom Top (Kauf/Verkauf). Wenig Verkaufs-Konkurrenz = wenig Unterbietungs-Krieg. <b>Druck</b> = Buy÷Sell-Volumen (±5 %); &gt;1 stützt den Preis. Ab 8 Verkaufs-Konkurrenten gibt es kein ★ mehr.</p>
-      <h3>Allokation</h3>
-      <p>Kapital wird score-gewichtet verteilt. Deckel/Posten = Markttage × Vol × Kaufpreis. ISK/Tag = Netto × Vol × Capture.</p>
-      <h3>Hauling</h3>
-      <p>Arb/Stk = ZielHubSell × (1−Tax−Broker) − HeimSell. Sofortkauf an deiner Basis (kein Broker), Verkauf per Order am Ziel-Hub. <b>Gank-Risiko nicht eingepreist</b> — teure Fracht splitten.</p>
-      <p><b>Rückfracht</b> (Ziel-Hub→Heim): LP-Farmer dumpen Faction-Ware oft unter Heim-Preis. Einkauf sofort am Ziel-Hub, Verkauf per Order an deiner Basis — füllt die leere Heimreise. Erscheint unabhängig vom Heim-Verdikt: ein MEIDEN-Item kann trotzdem Top-Rückfracht sein.</p>
-      <p><b>Hub-Vol/T</b> = Tagesvolumen der Hub-Region (Ø 5T). Hinweg zählt der Absatz: <b>min. Tage</b> = Stk/Trip ÷ Hub-Vol ist die Untergrenze selbst ohne Konkurrenz; tote Zielmärkte (&lt;1/T) rutschen ans Ende. Rückweg zeigt es die Nachfüllrate des Dumps.</p>
-      <h3>Deadspace &amp; Sets</h3>
-      <p>Qualität <b>X &gt; A &gt; B &gt; C</b>. Coreli/Corelum/Core=Serpentis · Gistii/Gistum/Gist=Angel · Corpii/Corpum/Corpus=Blood · Centii/Centum/Centus=Sansha · Pithi/Pithum/Pith=Guristas.</p>
-      <p>HG-Sets: Amulet, Ascendancy, Asklepian, Crystal, Grail, Halo, Hydra, Jackal, Mimesis, Nirvana, Rapture, Savior, Snake, Spur, Talisman, Talon. („Slave" existiert nicht.)</p>
-      <h3>Wallet-Auswertung (Phase 2)</h3>
-      <p><b>P&amp;L</b> matcht Verkäufe per FIFO gegen frühere Käufe und zieht die <b>echten</b> Broker+Tax-Beträge aus dem Wallet-Journal ab — dein realer Gewinn je Item, Gewinner und Verlierer getrennt. (ESI liefert ~letzte 2500 Transaktionen / ~30 Tage.)</p>
-      <p><b>Bestand</b> lädt deine Assets in Jita 4-4: die Allokation zeigt dann Ziel / Bestand / <b>noch zu kaufen</b> — Multibuy kopiert nur die echte Kaufmenge.</p>
-      <h3>Charakter (SSO)</h3>
-      <p>Login via offiziellem EVE-SSO (PKCE im Popup); Callback muss <b>https</b> sein — am einfachsten via GitHub Pages hosten. Der Token lebt <b>nur im RAM</b> dieser Seite — kein Speichern, Seite neu geladen = neu einloggen. Scopes sind read-only; Market-Orders kann ESI ohnehin nicht erstellen. <b>Tokens niemals weitergeben oder irgendwo einfügen.</b></p>
-      <p><b>Unterboten-Check</b> vergleicht jede deiner Orders an den 5 Hubs mit dem Markt-Top. <b>Auto-Gebühren</b>: Tax = 7,5 % × (1 − 0,11 × Accounting); Broker = 3 % − 0,3 % × Broker Relations — Standings senken weiter (manuell nachjustieren).</p>
-      <h3>Makro (MER)</h3>
-      <p>Monatlich vier Δ-Kennzahlen aus dem Monthly Economic Report eintragen (liefere ich aus dem ZIP) → „Lage auswerten" übersetzt sie in Capture/Markttage-Empfehlungen. Der <b>Zerstörungs-Hotspot</b> gibt Arb-Routen zum betroffenen Hub +8 % Score.</p>
-      <h3>Workflow</h3>
-      <p><b>Quick-Rescan</b> aktualisiert nur Treffer + Routen (Stufe 2); History/m³/Hub-Vol bleiben vom Vollscan. <b>⧉ Multibuy</b> kopiert Listen als ‚Name x Stück‘ — in EVE: Marktfenster → Multibuy, einfügen, fertig.</p>
+      <p>Militärkampagnen laufen <b>saisonal ≈120 Tage</b>; Ausgang kann Hub-Gebühren dauerhaft ändern. Darum Gebühren pro Hub editierbar und Heim-Hub umstellbar.</p>
       <h3>Merksatz</h3>
-      <p>Riesige Marge = tradet fast nie. Hohes Volumen = Marge fast null. Geld liegt im <b>Sweet Spot</b>.</p>
+      <p>Riesige Marge tradet fast nie, hohes Volumen hat fast keine Marge — Geld liegt im <b>Sweet Spot</b>, gerankt nach <b>ISK/Tag</b>.</p>
+      </div>
     </div>
     </div>
 
@@ -464,6 +432,19 @@ ALLMETAS.forEach(m=>{
   w.innerHTML='<input type="checkbox" id="meta_'+m+'" '+(on?"checked":"")+'><label for="meta_'+m+'">'+m+" ("+CATALOG.filter(c=>c.m===m).length+")</label>";
   $("metaChks").appendChild(w);
 });
+function setAllCats(mode){ /* mode: "all"|"none"|"default" */
+  ALLCATS.forEach(c=>{
+    const groups=uniq(CATALOG.filter(x=>x.c===c).map(x=>x.g));
+    const on=(mode==="all")?true:(mode==="none")?false:DEFAULT_ON.has(c);
+    const ce=$(catId(c));if(ce){ce.checked=on;ce.indeterminate=false;}
+    groups.forEach(g=>{const se=$(subId(c,g));if(se)se.checked=on;});
+  });
+  updateCnt();
+}
+$("catAll").addEventListener("click",()=>setAllCats("all"));
+$("catNone").addEventListener("click",()=>setAllCats("none"));
+$("catDef").addEventListener("click",()=>setAllCats("default"));
+(function(){const t=$("legToggle"),b=$("legBody");if(t&&b)t.addEventListener("click",()=>{const v=b.style.display==="none";b.style.display=v?"block":"none";t.innerHTML="Legende &amp; Kürzel "+(v?"▾":"▸");});})();
 function buildHubGrid(){
   const hg=$("hubGrid");
   /* Kopfzeile behalten, Rest neu */
@@ -518,6 +499,7 @@ updateCnt();
 const WL_KEY="eveScanner_watchlist_v1";
 let watchlist=[];
 try{const raw=localStorage.getItem(WL_KEY);if(raw)watchlist=JSON.parse(raw)||[];}catch(e){watchlist=[];}
+if(!watchlist.length){watchlist=[{id:40520,name:"Large Skill Injector"},{id:45635,name:"Small Skill Injector"},{id:40519,name:"Skill Extractor"},{id:44992,name:"PLEX"}];}
 function wlSave(){try{localStorage.setItem(WL_KEY,JSON.stringify(watchlist));}catch(e){}}
 function wlRender(){
   const host=$("wlList");host.innerHTML="";
@@ -932,10 +914,6 @@ async function runScan(seed,label){
   setScanBtns(true);$("prog").style.width="0%";$("recs").innerHTML="";
   $("allocSec").style.display="none";$("haulSec").style.display="none";$("revSec").style.display="none";
   rows=seed;
-  const extra=$("extra").value.split("\n").map(s=>s.trim()).filter(s=>s&&!s.startsWith("#"));
-  const exNames=[];
-  extra.forEach(l=>{if(/^\d+$/.test(l))rows.push({id:parseInt(l,10),name:null,cat:"Extra",meta:""});else{rows.push({name:l,cat:"Extra",meta:"",_resolve:true});exNames.push(l);}});
-  if(exNames.length){const res=await resolveIds(exNames);rows.forEach(r=>{if(r._resolve){const id=res.map[r.name.toLowerCase()];if(id)r.id=id;else r.err=res.error?("Aufl\u00f6sung fehlgeschlagen ("+res.error+") \u2014 Type-ID nutzen"):"Name nicht aufgel\u00f6st \u2014 Type-ID nutzen";}});}
   const needName=rows.filter(r=>r.id&&!r.name);
   if(needName.length){await pool(needName,async r=>{const ti=await typeInfo(r.id);r.name=(ti&&ti.name)||("#"+r.id);},8);}
   const valid=rows.filter(r=>r.id&&!r.err);
