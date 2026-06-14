@@ -132,20 +132,6 @@
   <header>
     <h1>NEW EDEN <span>// MARKET SCANNER</span></h1>
     <div class="sub">ESI live · SDE-verifiziert · Station-Trading · 5 Hubs · Allokation · P&amp;L</div>
-    <div class="help" tabindex="0">? Legende &amp; Kürzel
-      <div class="helppop">
-        <h3>Symbole</h3>
-        <p><b class="neg">⛔/⊘</b> Verlust / unhandelbar · <b style="color:var(--gold)">〜</b> volatil · <b style="color:var(--amber)">⚠</b> Top-Order-Falle · <b>KO→VO</b> Kauf→Verkauf-Einstellpreis.</p>
-        <h3>Verdikte</h3>
-        <p><b style="color:var(--gold)">★ Stark Kaufen</b> / <b class="pos">Kaufen</b> = realisierbar, liquide, Marge ok · <b style="color:var(--amber)">Beobachten</b> = grenzwertig · <b class="neg">Meiden / Unhandelbar</b> = Gebühren nicht gedeckt oder Fantasiepreis.</p>
-        <h3>Deadspace-Präfixe</h3>
-        <p>Core=Serpentis · Gist=Angel · Corp=Blood · Cent=Sansha · Pith=Guristas. Qualität <b>X&gt;A&gt;B&gt;C</b>.</p>
-        <h3>HG-Implantat-Sets</h3>
-        <p>Amulet, Ascendancy, Asklepian, Crystal, Grail, Halo, Hydra, Jackal, Mimesis, Nirvana, Rapture, Savior, Snake, Spur, Talisman, Talon.</p>
-        <h3>Merksatz</h3>
-        <p>Riesige Marge tradet fast nie, hohes Volumen hat fast keine Marge — Geld liegt im <b>Sweet Spot</b>, gerankt nach <b>ISK/Tag</b>. Die meisten Felder erklären sich per Maus-Tooltip.</p>
-      </div>
-    </div>
   </header>
 
   <div class="ctrl">
@@ -258,12 +244,24 @@
     </div>
 
     <!-- ⓘ Legende -->
+    <div class="mod legbox">
+      <div class="t">ⓘ Legende &amp; Kürzel</div>
+      <h3>Symbole</h3>
+      <p><b class="neg">⛔/⊘</b> Verlust / unhandelbar · <b style="color:var(--gold)">〜</b> volatil · <b style="color:var(--amber)">⚠</b> Top-Order-Falle · <b>KO→VO</b> Kauf→Verkauf-Einstellpreis.</p>
+      <h3>Deadspace-Präfixe</h3>
+      <p>Core=Serpentis · Gist=Angel · Corp=Blood · Cent=Sansha · Pith=Guristas. Qualität <b>X&gt;A&gt;B&gt;C</b>.</p>
+      <h3>HG-Sets</h3>
+      <p>Amulet, Ascendancy, Asklepian, Crystal, Grail, Halo, Hydra, Jackal, Mimesis, Nirvana, Rapture, Savior, Snake, Spur, Talisman, Talon.</p>
+      <h3>Merksatz</h3>
+      <p>Riesige Marge tradet fast nie, hohes Volumen hat fast keine Marge — Geld liegt im <b>Sweet Spot</b>, gerankt nach <b>ISK/Tag</b>.</p>
+      <span id="legToggle" style="display:none"></span><span id="legBody" style="display:none"></span>
+    </div>
+
   </div>
 
   <div class="data">
     <div class="status" id="status">Bereit. Wähle „Liste" oder „Katalog", treffe deine Auswahl und scanne.</div>
     <div class="bar"><i id="prog"></i></div>
-    <span id="legToggle" style="display:none"></span><span id="legBody" style="display:none"></span>
     <div class="datagrid">
       <div class="anaCol">
         <div class="recs" id="recs"></div>
@@ -349,17 +347,18 @@
             <th data-k="name" data-tip="Itemname (Meta dahinter). Spaltenköpfe sortieren.">Item</th>
             <th data-k="buy" id="thBuy" data-tip="Bester Buy-Order an deiner Basis — hier kaufst du per Kauforder ein.">Kauf</th>
             <th data-k="sell" id="thSell" data-tip="Bester Sell-Order an deiner Basis — hier verkaufst du per Verkaufsorder.">Verkauf</th>
-            <th data-k="margin" class="act" data-tip="SOFORT-Marge: sofort kaufen → sofort verkaufen. ⚠ = Top-Order-Falle.">Sofort %</th>
-            <th data-k="stMargin" data-tip="STATION-Marge (deine Spielweise): Buy-Order → Sell-Order, voller Spread minus 2× Broker + Tax. ⛔ = Gebühren nicht gedeckt.">Station %</th>
-            <th data-tip="KO = Buy-Order hier setzen, VO = Sell-Order hier. Bei volatilen Items optimistischer Sell (〜).">Einstellen (KO→VO)</th>
-            <th data-k="compS" data-tip="Konkurrenz: Orders ≤2 % vom Top (Kauf/Verkauf). Wenig = wenig Unterbietungskrieg.">Konk.</th>
-            <th data-k="press" data-tip="Kaufdruck = Buy÷Sell-Volumen (±5 %). >1 stützt den Preis.">Druck</th>
-            <th data-k="vol" data-tip="Ø gehandelte Stück/Tag (letzte 5T).">Vol/T</th>
-            <th data-k="avg" data-tip="30-Tage-Durchschnittspreis.">Ø30T</th>
+            <th data-k="stMargin" class="act" data-tip="STATION-Marge (deine Spielweise): eigene Buy-Order → eigene Sell-Order, voller Spread minus 2× Broker + Tax. Die belastbarste Zahl. ⛔ = Gebühren nicht gedeckt.">Station %</th>
+            <th data-k="margin" data-tip="SOFORT-Marge zum Vergleich: sofort kaufen → sofort verkaufen. ⚠ = Top-Order-Falle.">Sofort %</th>
+            <th data-k="vol" data-tip="Ø gehandelte Stück/Tag (letzte 5T) — wie viel Markt da ist.">Vol/T</th>
+            <th data-k="allocQty" data-tip="Empfohlene Menge zu halten: Kapitalanteil ÷ Kaufpreis, gedeckelt durch Max. Markttage × Tagesvolumen. SCHÄTZUNG unter Annahmen — kein Versprechen.">Empf. Menge</th>
+            <th data-k="allocTotalProfit" data-tip="Gesamt-Gewinn bei voller empfohlener Menge = Menge × Netto/Stk. Potenzial, wenn du alles abverkaufst — abhängig von Capture & Konkurrenz.">Gesamt-Gewinn</th>
+            <th data-k="allocIskDay" data-tip="Erwarteter Tagesertrag = Netto/Stk × Tagesvolumen × Capture. So schnell fließt der Gewinn.">ISK/Tag</th>
+            <th data-k="compS" data-tip="Konkurrenz: Verkaufs-Orders ≤2 % vom Top. WICHTIG: wenig = Empfehlung hält; viel = du wirst unterboten, Mengen-Schätzung unsicher.">Konk.</th>
+            <th data-tip="Konkrete Einstellpreise: KO = Buy-Order hier setzen, VO = Sell-Order hier. Diese Preise sind hart (echtes Orderbuch). 〜 = volatil, optimistischer Sell lohnt.">Einstellen (KO→VO)</th>
             <th data-k="disc" data-tip="Verkaufspreis vs. Ø30T. − = günstiger Einstieg.">Δ z. Ø</th>
             <th data-k="trend" data-tip="7T vs. Vorwoche. ▼ = fallend, Vorsicht.">Trend</th>
             <th data-k="bestArb" data-tip="Ziel-Hub mit höchstem Netto-Arbitragegewinn.">Bester Hub</th>
-            <th data-k="verdict" data-tip="Gesamturteil aus Marge, Volumen, Δ z. Ø, Trend, Arbitrage.">Verdikt</th>
+            <th data-k="verdict" data-tip="Gesamturteil aus Marge, Volumen, Realisierbarkeit, Trend, Arbitrage.">Verdikt</th>
           </tr></thead>
           <tbody id="body"></tbody>
         </table>
@@ -633,6 +632,7 @@ function compute(){
   const tax=parseFloat($("tax").value)/100, brk=parseFloat($("broker").value)/100;
   const minm=parseFloat($("minm").value), minv=parseFloat($("minv").value), minw=parseFloat($("minw").value)*1e6;
   const hubs=activeHubs();
+  rows.forEach(r=>{r.allocQty=null;r.allocTotalProfit=null;r.allocIskDay=null;});
   const hot=($("merHot")&&$("merHot").value)||"";
   rows.forEach(r=>{if(r.err)return;
     if(r.skipped){r.margin=r.disc=r.bestArb=null;r.verdict="ESI ✕ retry";r.vclass="watch";r.score=-1;r.lowval=false;return;}
@@ -749,6 +749,10 @@ function allocate(){
     const iskday=r.net*r.vol*cap;
     const days=r.qty/(r.vol*cap);
     const mode=(r.bestArb!=null&&r.bestArb>=6&&r.bestArb>r.margin)?("Haul → "+r.bestHub):(HOME.key+"-Flip");
+    /* an die Zeile anheften, damit die Markttabelle alles in einer Zeile zeigen kann */
+    r.allocQty=r.qty; r.allocBuy=toBuy; r.allocStock=stock;
+    r.allocKapital=kap; r.allocIskDay=iskday; r.allocDays=days; r.allocMode=mode;
+    r.allocTotalProfit=r.qty*r.net;   /* Gesamt-Gewinn bei voller empfohlener Menge */
     allocRows.push({name:r.name,qty:toBuy});
     tk+=kap;ti+=iskday;
     const tr=document.createElement("tr");
@@ -837,39 +841,52 @@ function renderTable(){
   if(sortKey!=="name")sorted.sort((a,b)=>((a[sortKey]??-1e18)-(b[sortKey]??-1e18))*sortDir);
   const tb=$("body");tb.innerHTML="";let cur=null;
   sorted.forEach(r=>{
-    if(sortKey==="name"&&r.cat!==cur){cur=r.cat;const tr=document.createElement("tr");tr.innerHTML='<td class="cat" colspan="14">'+r.cat+'</td>';tb.appendChild(tr);}
+    if(sortKey==="name"&&r.cat!==cur){cur=r.cat;const tr=document.createElement("tr");tr.innerHTML='<td class="cat" colspan="15">'+r.cat+'</td>';tb.appendChild(tr);}
     const tr=document.createElement("tr");
-    if(r.err){tr.innerHTML='<td class="name">'+(r.name||r.raw)+'</td><td class="err" colspan="13">'+r.err+'</td>';tb.appendChild(tr);return;}
-    const mc=r.margin>=0?"pos":"neg";
-    const margTd='<td class="'+mc+(r.trap?' tipr':'')+'"'+(r.trap?' data-tip="Top-Order-Falle: nackte Top-Marge '+r.topMargin.toFixed(1)+' %, volumengewichtet nur '+r.margin.toFixed(1)+' %. Der fette Spread hängt an einzelnen Mini-Orders — nicht drauf reinfallen."':'')+'>'+(r.margin==null?"–":r.margin.toFixed(1))+(r.trap?" ⚠":"")+'</td>';
+    if(r.err){tr.innerHTML='<td class="name">'+(r.name||r.raw)+'</td><td class="err" colspan="14">'+r.err+'</td>';tb.appendChild(tr);return;}
+    /* Station-Marge (Hauptzahl) + Einstellen-Zelle */
     let stTd,setTd;
     if(r.unreal){
-      stTd='<td class="vd avoid tipr" data-tip="Nicht handelbar: '+r.flags.join(", ")+'. Buy-Top 0,01 = niemand kauft; einsamer Sell-Top weit über Ø30T = Fantasiepreis. Dieser ‚Spread‘ lässt sich nicht realisieren.">⊘ unhandelbar</td>';
-      setTd='<td class="neg" style="font-size:10px">'+r.flags.join("<br>")+'</td>';
+      stTd='<td class="vd avoid tipr" data-tip="Nicht handelbar: '+r.flags.join(", ")+'. Buy-Top 0,01 = niemand kauft; einsamer Sell-Top weit über Ø30T = Fantasiepreis. Lässt sich nicht realisieren.">⊘</td>';
+      setTd='<td class="neg" style="font-size:9px">'+r.flags.join("<br>")+'</td>';
     }
     else if(r.stMargin==null){stTd='<td class="dimv">–</td>';setTd='<td class="dimv">–</td>';}
     else if(r.stLoss){
-      stTd='<td class="vd avoid tipr" data-tip="Spread deckt die Gebühren nicht: voller Station-Spread minus 2× Broker + Tax ergibt '+fmt(r.stNet)+' ISK/Stk. Bei dieser Spielweise garantierter Verlust — Finger weg (genau das war die Skill-Injector-Falle).">⛔ '+r.stMargin.toFixed(1)+'</td>';
+      stTd='<td class="vd avoid tipr" data-tip="Spread deckt die Gebühren nicht: voller Station-Spread minus 2× Broker + Tax = '+fmt(r.stNet)+' ISK/Stk. Garantierter Verlust — Finger weg.">⛔ '+r.stMargin.toFixed(1)+'</td>';
       setTd='<td class="neg">Verlust</td>';
     } else {
       const volTag=r.volatile?' 〜':'';
-      stTd='<td class="pos'+(r.volatile?' tipr':'')+'"'+(r.volatile?' data-tip="Volatil: Tagesspanne Ø '+r.volat.toFixed(0)+' %. Sell-Preis lohnt höher anzusetzen — siehe optimistischen Preis in der Einstellen-Spalte."':'')+'>'+r.stMargin.toFixed(1)+volTag+'</td>';
-      let setHtml='<span class="dimv">KO</span> '+fmt(r.stBuy)+' <span class="dimv">→ VO</span> '+fmt(r.stSell)+'<br><span class="meta">+'+fmt(r.stNet)+'/Stk netto</span>';
+      stTd='<td class="pos'+(r.volatile?' tipr':'')+'" style="font-weight:700"'+(r.volatile?' data-tip="Volatil: Tagesspanne Ø '+r.volat.toFixed(0)+' %. Sell-Preis lohnt höher — siehe 〜 in der Einstellen-Spalte."':'')+'>'+r.stMargin.toFixed(1)+volTag+'</td>';
+      let setHtml='<span class="dimv">KO</span> '+fmt(r.stBuy)+' <span class="dimv">→ VO</span> '+fmt(r.stSell)+' <span class="meta">(+'+fmt(r.stNet)+'/Stk)</span>';
       if(r.volatile&&r.stSellOpt>r.stSell*1.001){
-        setHtml+=' <span class="meta" style="color:var(--gold)">〜 opt. VO '+fmt(r.stSellOpt)+' (+'+fmt(r.stNetOpt)+')</span>';
+        setHtml+='<br><span class="meta" style="color:var(--gold)">〜 opt. VO '+fmt(r.stSellOpt)+' (+'+fmt(r.stNetOpt)+'/Stk)</span>';
       }
-      setTd='<td style="text-align:left;white-space:normal;line-height:1.5">'+setHtml+'</td>';
+      setTd='<td style="text-align:left;white-space:normal;line-height:1.4">'+setHtml+'</td>';
+    }
+    /* Sofort-Marge (Vergleich) */
+    const mc=r.margin>=0?"pos":"neg";
+    const margTd='<td class="'+mc+(r.trap?' tipr':'')+'"'+(r.trap?' data-tip="Top-Order-Falle: nackte Top-Marge '+r.topMargin.toFixed(1)+' %, robust nur '+r.margin.toFixed(1)+' %."':'')+'>'+(r.margin==null?"–":r.margin.toFixed(1))+(r.trap?" ⚠":"")+'</td>';
+    /* Gewinn-Block: empfohlene Menge, Gesamtgewinn, ISK/Tag */
+    const hasAlloc=(r.allocQty!=null&&r.allocQty>0);
+    const qtyTd=hasAlloc?('<td class="pos" style="font-weight:700">'+r.allocQty+'</td>'):'<td class="dimv">–</td>';
+    const profTd=hasAlloc?('<td class="pos" style="font-weight:700">'+fmt(r.allocTotalProfit)+'</td>'):'<td class="dimv">–</td>';
+    const idayTd=hasAlloc?('<td class="pos">'+fmt(r.allocIskDay)+'</td>'):'<td class="dimv">–</td>';
+    /* Konkurrenz: nur Verkäufer-Zahl, farbcodiert (das ist die Realisierbarkeits-Warnung) */
+    let compTd='<td class="dimv">–</td>';
+    if(r.compS!=null){
+      const cc=r.compS<=3?"pos":r.compS<=7?"watch":"neg";
+      compTd='<td class="vd '+cc+' tipr" data-tip="'+r.compS+' Verkaufs-Konkurrenten ≤2 % vom Top. ≤3 = ruhig (Empfehlung hält), 4–7 = mittel, 8+ = Unterbietungskrieg (Mengen-Schätzung unsicher).">'+r.compS+'</td>';
     }
     const tr2=(r.trend==null)?"–":(r.trend>3?'<span class="pos">▲'+r.trend.toFixed(0)+'%</span>':r.trend<-3?'<span class="neg">▼'+Math.abs(r.trend).toFixed(0)+'%</span>':"→");
     const arbCell=(r.bestArb==null)?"–":'<span class="'+(r.bestArb>0?'pos':'dimv')+'">'+r.bestHub+' '+(r.bestArb>0?"+":"")+r.bestArb.toFixed(0)+'%</span>';
+    const discTd='<td class="'+((r.disc||0)>0?'pos':'neg')+'">'+(r.disc==null?"–":(r.disc>0?"-":"+")+Math.abs(r.disc).toFixed(0)+"%")+'</td>';
     tr.innerHTML='<td class="name">'+r.name+' <span class="meta">'+(r.meta||"")+'</span></td>'+
       '<td>'+fmt(r.buy)+'</td><td>'+fmt(r.sell)+'</td>'+
-      margTd+stTd+setTd+
-      '<td class="dimv">'+(r.compB!=null?(r.compB+"/"+r.compS):"–")+'</td>'+
-      '<td class="'+(r.press!=null?(r.press>=1?"pos":"neg"):"dimv")+'">'+(r.press==null?"–":"×"+r.press.toFixed(1))+'</td>'+
-      '<td class="dimv">'+fmt(r.vol)+'</td><td class="dimv">'+fmt(r.avg)+'</td>'+
-      '<td class="'+((r.disc||0)>0?'pos':'neg')+'">'+(r.disc==null?"–":(r.disc>0?"-":"+")+Math.abs(r.disc).toFixed(0)+"%")+'</td>'+
-      '<td>'+tr2+'</td><td>'+arbCell+'</td>'+
+      stTd+margTd+
+      '<td class="dimv">'+fmt(r.vol)+'</td>'+
+      qtyTd+profTd+idayTd+
+      compTd+setTd+
+      discTd+'<td>'+tr2+'</td><td>'+arbCell+'</td>'+
       '<td class="vd '+r.vclass+' tipr" data-tip="'+(TIPV[r.vclass]||"")+'">'+r.verdict+'</td>';
     tb.appendChild(tr);});}
 function render(){compute();renderRecs();allocate();renderHaul();renderRev();renderTable();}
