@@ -393,13 +393,29 @@ function ssoCallbackUrl(){
   return new URL("index.html",location.href).href.split("?")[0];
 }
 async function ssoLogin(){
-  if(location.protocol!=="https:"){$("ssoWarn").textContent="CCP erlaubt nur https-Callbacks.";return;}
+  if(location.protocol!=="https:"){
+    $("ssoWarn").textContent="Seite muss über HTTPS aufgerufen werden (GitHub Pages ✓).";
+    return;
+  }
   const v=randStr(),st=randStr();ssoPending={verifier:v,state:st};
-  const ch=await pkceChallenge(v);
-  const u=new URL("https://login.eveonline.com/v2/oauth/authorize");
-  u.search=new URLSearchParams({response_type:"code",redirect_uri:ssoCallbackUrl(),client_id:SSO_CLIENT_ID,scope:SSO_SCOPES,state:st,code_challenge:ch,code_challenge_method:"S256"}).toString();
-  window.open(u.toString(),"evesso","width=480,height=760");
-  $("ssoWarn").textContent="Login-Fenster geöffnet…";
+  /* Popup SYNCHRON öffnen — Browser sperren window.open() nach einem await (User-Gesture geht verloren). */
+  const popup=window.open("about:blank","evesso","width=480,height=760");
+  if(!popup){
+    $("ssoWarn").textContent="Popup blockiert — bitte Popup-Blocker für diese Seite deaktivieren und erneut klicken.";
+    ssoPending=null;
+    return;
+  }
+  $("ssoWarn").textContent="Öffne EVE-Login…";
+  try{
+    const ch=await pkceChallenge(v);
+    const u=new URL("https://login.eveonline.com/v2/oauth/authorize");
+    u.search=new URLSearchParams({response_type:"code",redirect_uri:ssoCallbackUrl(),client_id:SSO_CLIENT_ID,scope:SSO_SCOPES,state:st,code_challenge:ch,code_challenge_method:"S256"}).toString();
+    popup.location.href=u.toString();
+    $("ssoWarn").textContent="Login-Fenster geöffnet — bitte einloggen und Zugriff bestätigen.";
+  }catch(e){
+    popup.close();ssoPending=null;
+    $("ssoWarn").textContent="Fehler: "+e.message;
+  }
 }
 window.addEventListener("message",async ev=>{
   if(ev.origin!==location.origin)return;
