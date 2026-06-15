@@ -227,8 +227,6 @@
     <div class="mod">
       <div class="t">⑤ Charakter (ESI)</div>
       <div id="ssoOff">
-        <label data-tip="Public Client-ID deiner App von developers.eveonline.com. Ist bereits fest eingetragen.">Client-ID</label>
-        <input id="cid" placeholder="(fest eingetragen)">
         <div class="hint">Callback: <span class="k" id="cbUrl"></span></div>
         <button id="ssoBtn" class="btn teal" style="margin-top:5px">▶ Mit EVE einloggen</button>
         <div class="hint" id="ssoWarn"></div>
@@ -393,7 +391,7 @@ let rows=[], sortKey="margin", sortDir=-1;
 let allocRows=[], haulRows=[], revRows=[];
 const INV={};  /* type_id -> Stückzahl im Bestand (Jita 4-4) */
 /* ===== EVE SSO (PKCE) ===== */
-const SSO_CLIENT_ID="1ddd59da544449649840fd57a62dea6d";   /* <- eigene Client-ID hier fest eintragen (developers.eveonline.com) */
+const SSO_CLIENT_ID=""; /* <- Client-ID der eigenen App aus developers.eveonline.com hier eintragen */
 const SSO_SCOPES="esi-markets.read_character_orders.v1 esi-skills.read_skills.v1 esi-wallet.read_character_wallet.v1 esi-assets.read_assets.v1";
 const SKILL_ACCOUNTING=16622, SKILL_BROKER=3446; /* SDE-verifiziert */
 const CATMAP={};CATALOG.forEach(c=>{CATMAP[c.i]=c.n;});
@@ -1044,7 +1042,7 @@ $("cpAlloc").addEventListener("click",()=>{if(allocRows.length)copyText(allocRow
 $("cpHaul").addEventListener("click",()=>{if(haulRows.length)copyText(haulRows.map(x=>x.name+" x"+x.qty).join("\n"),$("cpHaul"));});
 $("cpRev").addEventListener("click",()=>{if(revRows.length)copyText(revRows.map(x=>x.name+" x"+x.qty).join("\n"),$("cpRev"));});
 /* ===== SSO Funktionen ===== */
-function cid(){return (SSO_CLIENT_ID||$("cid").value.trim());}
+function cid(){return SSO_CLIENT_ID;}
 function b64u(buf){let t="";const a=new Uint8Array(buf);for(let i=0;i<a.length;i++)t+=String.fromCharCode(a[i]);return btoa(t).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
 function randStr(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b64u(a.buffer);}
 async function pkceChallenge(v){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return b64u(d);}
@@ -1347,7 +1345,6 @@ async function computePnL(){
     return;
   }
   $("cbUrl").textContent=location.origin+location.pathname;
-  if(SSO_CLIENT_ID)$("cid").value=SSO_CLIENT_ID;
   if(location.protocol!=="https:")$("ssoWarn").textContent="Hinweis: CCP erlaubt nur https-Callbacks — fürs SSO die Datei auf GitHub Pages hosten (wie PROMPTA) und von dort öffnen. Scanner/Makro laufen auch ohne Login.";
 })();
 ["broker","tax","minm","minv","minw","capital","capture","mdays","cargo"].forEach(id=>$(id).addEventListener("change",()=>{if(rows.length)render();}));

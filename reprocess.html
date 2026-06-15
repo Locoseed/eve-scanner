@@ -156,7 +156,7 @@ th[data-tip]:hover::after{right:auto;left:0}
         <span style="color:var(--dim);font-size:9px">lädt Skills + Gebühren</span>
       </div>
       <div class="hint" style="margin-top:5px">
-        Callback läuft über <b>index.html</b> — dieselbe URI wie beim Market Scanner, keine neue Registrierung nötig:<br>
+        Diese URL muss in deiner CCP-App als Redirect URI eingetragen sein:<br>
         <b id="cbUrl" style="color:var(--teal);word-break:break-all;font-size:9px"></b>
       </div>
       <div class="ssowarn" id="ssoWarn"></div>
@@ -387,10 +387,8 @@ function randStr(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b
 async function pkceChallenge(v){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return b64u(d);}
 function jwtPayload(t){try{const p=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");return JSON.parse(atob(p));}catch(e){return{};}}
 function ssoCallbackUrl(){
-  /* Nutzt index.html als Redirect-URI — die ist bereits bei CCP registriert.
-     Der Popup-Code in index.html erkennt den Callback und schickt ihn per
-     postMessage zurück an dieses Fenster. */
-  return new URL("index.html",location.href).href.split("?")[0];
+  /* reprocess.html dient als eigener Callback — muss in der CCP-App eingetragen sein. */
+  return (location.origin+location.pathname).split("?")[0];
 }
 async function ssoLogin(){
   if(location.protocol!=="https:"){
