@@ -367,21 +367,32 @@ async function getVol(region,typeId){
   return sl.reduce((s,d)=>s+d.volume,0)/sl.length;
 }
 
-/* ===== Fuzzwork ===== */
-async function getFuzzMats(typeId){
-  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
+/* ===== Fuzzwork SDE: Reprocessing-Materialien =====
+   Es gibt keine Per-Item-JSON-API; die Mengen stehen im SDE-Dump invTypeMaterials.csv
+   (Spalten: typeID,materialTypeID,quantity). Wir laden das CSV EINMAL und schlagen danach
+   lokal nach — statt tausender Einzel-Requests. */
+let MAT_MAP=null; /* Map<typeID, Array<{mid,qty}>> */
+async function loadMatMap(){
+  if(MAT_MAP)return MAT_MAP;
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),30000);
+  let txt;
   try{
-    const r=await fetch("https://www.fuzzwork.co.uk/api/typematerials.php?typeid="+typeId,{signal:ctl.signal});
+    const r=await fetch("https://www.fuzzwork.co.uk/dump/latest/csv/invTypeMaterials.csv",{signal:ctl.signal});
     clearTimeout(to);
     if(!r.ok)return null;
-    const j=await r.json();
-    if(!j||!j.materials)return{};
-    const out={};
-    for(const[mid,info]of Object.entries(j.materials)){
-      out[parseInt(mid)]={qty:parseInt(info.quantity),name:info.name||("#"+mid)};
-    }
-    return out;
+    txt=await r.text();
   }catch(e){clearTimeout(to);return null;}
+  const map=new Map();
+  const lines=txt.split("\n");
+  for(let i=1;i<lines.length;i++){
+    const m=lines[i].match(/^"?(\d+)"?\s*,\s*"?(\d+)"?\s*,\s*"?(\d+)"?/);
+    if(!m)continue;
+    const tid=+m[1],mid=+m[2],qty=+m[3];
+    let arr=map.get(tid);if(!arr){arr=[];map.set(tid,arr);}
+    arr.push({mid,qty});
+  }
+  MAT_MAP=map;
+  return map;
 }
 
 /* ===== SSO / PKCE ===== */
@@ -640,14 +651,13 @@ async function runScan(){
     if(res.data)typeCache[id]=res.data;
   },10,n=>{if(n%40===0)setS(`Lade Typinfo… (${n}/${ids.length})`,8+Math.round(n/ids.length*8));});
 
-  /* Fuzzwork Materialien */
-  setS("Lade Reprocessing-Daten (Fuzzwork)…",18);
-  const matsCache={};
-  await pool(ids,async id=>{matsCache[id]=await getFuzzMats(id);},6,
-    n=>{if(n%40===0)setS(`Lade Reprocessing-Daten (Fuzzwork)… (${n}/${ids.length})`,18+Math.round(n/ids.length*6));});
+  /* Reprocessing-Materialien — einmaliger SDE-Dump statt pro-Item-Request */
+  setS("Lade Reprocessing-Daten (Fuzzwork SDE)…",18);
+  const matMap=await loadMatMap();
+  if(!matMap){setS('Reprocessing-Daten nicht ladbar — Netzwerk/CORS? (Fuzzwork-SDE-Dump nicht erreichbar)',0);btn.disabled=false;return;}
 
   /* Nur Items mit Typinfo + Reproc-Materialien weiterverfolgen */
-  const candidates=ids.filter(id=>typeCache[id]&&matsCache[id]&&Object.keys(matsCache[id]).length);
+  const candidates=ids.filter(id=>typeCache[id]&&matMap.has(id)&&matMap.get(id).length);
   if(!candidates.length){setS("Keine reprocessbaren Items mit Materialdaten gefunden.",0);btn.disabled=false;return;}
 
   /* Volumen zuerst — dient zugleich als Liquiditäts-Vorfilter (index.html-Muster),
@@ -661,8 +671,15 @@ async function runScan(){
 
   /* Eindeutige Material-IDs der verbleibenden Items */
   const allMatIds=new Set();
-  for(const id of liquid){const m=matsCache[id];if(m)for(const mid of Object.keys(m))allMatIds.add(parseInt(mid));}
+  for(const id of liquid){for(const{mid}of matMap.get(id)||[])allMatIds.add(mid);}
   const matArr=[...allMatIds];
+
+  /* Material-Namen aus ESI (kleine, eindeutige Menge — CSV-Dump enthält keine Namen) */
+  const matNameCache={};
+  await pool(matArr,async mid=>{
+    const res=await getJSON(ESI+"/universe/types/"+mid+"/?datasource="+DS);
+    if(res.data)matNameCache[mid]=res.data.name;
+  },10);
 
   /* Marktpreise — in Blöcken abarbeiten, um das ESI-Error-Budget zu schonen (index.html-Muster).
      Zwischen Blöcken kurze Erholpause, damit das Budget nicht dauerhaft leerläuft. */
@@ -694,15 +711,15 @@ async function runScan(){
   scanResults=[];
   for(const id of liquid){
     const ti=typeCache[id];if(!ti)continue;
-    const mats=matsCache[id];if(!mats||!Object.keys(mats).length)continue;
+    const mats=matMap.get(id);if(!mats||!mats.length)continue;
     const portion=ti.portion_size||1;
     const ip=iPrice[id]||{};
     if(ip.sell==null&&ip.buy==null)continue;
 
     let matRevSell=0,matRevBuy=0;
     const details=[];
-    for(const[midS,{qty:baseQty,name:matName}]of Object.entries(mats)){
-      const mid=parseInt(midS);
+    for(const{mid,qty:baseQty}of mats){
+      const matName=matNameCache[mid]||("#"+mid);
       const received=Math.floor(baseQty*eff);if(received<=0)continue;
       const mp=mPrice[mid]||{};
       const vSell=mp.sell!=null?received*mp.sell:null;
