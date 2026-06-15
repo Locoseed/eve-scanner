@@ -27,12 +27,13 @@
   a{color:var(--teal)}
   .navlink{color:var(--teal);font-size:10px;text-decoration:none;border:1px solid var(--line);padding:3px 8px;margin-left:auto}
   .navlink:hover{border-color:var(--teal)}
-  /* ===== Kompakte Steuerleiste ===== */
-  .ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px;margin-bottom:8px;align-items:start}
-  .mod{background:var(--panel);border:1px solid var(--line);padding:6px 8px;min-width:0}
+  /* ===== Steuerleiste: dichte Masonry-Spalten, keine Höhen-Löcher ===== */
+  .ctrl{column-count:4;column-gap:6px;margin-bottom:8px}
+  @media(max-width:1550px){.ctrl{column-count:3}}
+  @media(max-width:1050px){.ctrl{column-count:2}}
+  @media(max-width:680px){.ctrl{column-count:1}}
+  .mod{background:var(--panel);border:1px solid var(--line);padding:6px 8px;min-width:0;display:inline-block;width:100%;margin-bottom:6px;break-inside:avoid;-webkit-column-break-inside:avoid}
   .mod>.t{font-family:'Chakra Petch',sans-serif;font-size:9px;letter-spacing:1px;color:var(--teal);text-transform:uppercase;margin-bottom:5px;border-bottom:1px solid var(--line);padding-bottom:3px;display:flex;justify-content:space-between;align-items:center;gap:6px}
-  .mod.wide{grid-column:span 2}
-  .mod.tall{grid-row:span 2}
   label{display:block;color:var(--dim);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;margin:0 0 2px}
   input,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 5px}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal)}
