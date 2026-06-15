@@ -177,11 +177,10 @@ th[data-tip]:hover::after{right:auto;left:0}
     <span>④ Katalog — Marktgruppen auswählen</span>
     <span style="display:flex;gap:6px;align-items:center">
       <span id="cacheInfo" class="hint" style="margin:0"></span>
-      <button id="loadBtn" class="btn sm" onclick="loadCatalog(false)">Katalog laden</button>
-      <button class="btn sm" onclick="loadCatalog(true)">↻ Neu laden</button>
+      <button id="loadBtn" class="btn sm" onclick="loadCatalog(true)">↻ Katalog neu laden</button>
     </span>
   </div>
-  <div id="catLoading" class="hint">Noch nicht geladen — klicke <b>Katalog laden</b>. Einmalig ~10–20 s, danach 24 h aus Cache.</div>
+  <div id="catLoading" class="hint">Lade Marktgruppen…</div>
   <div id="catControls" style="display:none">
     <div class="cat-toolbar">
       <input type="text" id="catSearch" placeholder="Gruppen filtern…" style="width:220px">
@@ -829,9 +828,8 @@ function renderTable(){
 
   $("cbUrl").textContent=ssoCallbackUrl();
 
-  /* Katalog aus Cache laden falls vorhanden */
-  const cached=loadCache();
-  if(cached)initGroups(cached,true);
+  /* Katalog automatisch laden (Cache → sofort, sonst ESI-Fetch) */
+  loadCatalog();
 
   /* SSO-Popup-Rückgabe */
   const q=new URLSearchParams(location.search);
