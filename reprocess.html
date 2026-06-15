@@ -369,8 +369,10 @@ async function getVol(region,typeId){
 
 /* ===== Fuzzwork ===== */
 async function getFuzzMats(typeId){
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
   try{
-    const r=await fetch("https://www.fuzzwork.co.uk/api/typematerials.php?typeid="+typeId);
+    const r=await fetch("https://www.fuzzwork.co.uk/api/typematerials.php?typeid="+typeId,{signal:ctl.signal});
+    clearTimeout(to);
     if(!r.ok)return null;
     const j=await r.json();
     if(!j||!j.materials)return{};
@@ -379,7 +381,7 @@ async function getFuzzMats(typeId){
       out[parseInt(mid)]={qty:parseInt(info.quantity),name:info.name||("#"+mid)};
     }
     return out;
-  }catch(e){return null;}
+  }catch(e){clearTimeout(to);return null;}
 }
 
 /* ===== SSO / PKCE ===== */
@@ -496,7 +498,7 @@ async function getTypesForSelectedCats(onProgress){
     await pool(groupIds,async gid=>{
       const grpRes=await getJSON(ESI+"/universe/groups/"+gid+"/?datasource="+DS);
       if(grpRes.data&&grpRes.data.types)grpRes.data.types.forEach(t=>types.add(t));
-      if(onProgress)onProgress();
+      if(onProgress)onProgress(types.size);
     },20);
   }
   return[...types];
@@ -624,8 +626,11 @@ async function runScan(){
 
   /* Typ-IDs per ESI-Universe holen */
   setS("Lade Typen von ESI…",2);
-  const ids=await getTypesForSelectedCats(()=>setS(`Lade Typen von ESI… (${ids&&ids.length||"?"})`+"",-1));
+  const ids=await getTypesForSelectedCats(n=>setS(`Lade Typen von ESI… (${n})`,-1));
   if(!ids.length){setS("Keine Typen gefunden — falscher Kategorie-Filter?",0);btn.disabled=false;return;}
+
+  const region=HOME.region,station=HOME.station;
+  const minVol=parseFloat($("minVol").value)||0;
 
   /* Typinfo */
   setS(`Lade Typinfo für ${ids.length} Items…`,8);
@@ -633,37 +638,51 @@ async function runScan(){
   await pool(ids,async id=>{
     const res=await getJSON(ESI+"/universe/types/"+id+"/?datasource="+DS);
     if(res.data)typeCache[id]=res.data;
-  },10);
+  },10,n=>{if(n%40===0)setS(`Lade Typinfo… (${n}/${ids.length})`,8+Math.round(n/ids.length*8));});
 
   /* Fuzzwork Materialien */
   setS("Lade Reprocessing-Daten (Fuzzwork)…",18);
   const matsCache={};
-  await pool(ids,async id=>{matsCache[id]=await getFuzzMats(id);},6);
+  await pool(ids,async id=>{matsCache[id]=await getFuzzMats(id);},6,
+    n=>{if(n%40===0)setS(`Lade Reprocessing-Daten (Fuzzwork)… (${n}/${ids.length})`,18+Math.round(n/ids.length*6));});
 
-  /* Eindeutige Material-IDs */
+  /* Nur Items mit Typinfo + Reproc-Materialien weiterverfolgen */
+  const candidates=ids.filter(id=>typeCache[id]&&matsCache[id]&&Object.keys(matsCache[id]).length);
+  if(!candidates.length){setS("Keine reprocessbaren Items mit Materialdaten gefunden.",0);btn.disabled=false;return;}
+
+  /* Volumen zuerst — dient zugleich als Liquiditäts-Vorfilter (index.html-Muster),
+     damit teure Order-Book-Abrufe nur für relevante Items laufen. */
+  setS(`Lade Volumen für ${candidates.length} Items…`,26);
+  const volCache={};
+  await pool(candidates,async id=>{const v=await getVol(region,id);if(v!=null)volCache[id]=v;},6,
+    n=>{if(n%40===0)setS(`Lade Volumen… (${n}/${candidates.length})`,26+Math.round(n/candidates.length*8));});
+  const liquid=minVol>0?candidates.filter(id=>volCache[id]!=null&&volCache[id]>=minVol):candidates;
+  if(!liquid.length){setS("Keine Items über dem Min-Volumen-Filter.",0);btn.disabled=false;return;}
+
+  /* Eindeutige Material-IDs der verbleibenden Items */
   const allMatIds=new Set();
-  for(const id of ids){const m=matsCache[id];if(m)for(const mid of Object.keys(m))allMatIds.add(parseInt(mid));}
+  for(const id of liquid){const m=matsCache[id];if(m)for(const mid of Object.keys(m))allMatIds.add(parseInt(mid));}
   const matArr=[...allMatIds];
 
-  /* Marktpreise */
-  const region=HOME.region,station=HOME.station;
+  /* Marktpreise — in Blöcken abarbeiten, um das ESI-Error-Budget zu schonen (index.html-Muster).
+     Zwischen Blöcken kurze Erholpause, damit das Budget nicht dauerhaft leerläuft. */
   const iPrice={},mPrice={};
-  let done=0,total=ids.length*2+matArr.length*2;
-  const tick=()=>setS(`Marktpreise: ${done}/${total}…`,30+Math.round(done/total*50));
-
-  await pool(ids,async id=>{
-    const[s,b]=await Promise.all([book(region,station,id,"sell"),book(region,station,id,"buy")]);
-    iPrice[id]={sell:s.best,buy:b.best};done+=2;tick();
-  },8);
-  await pool(matArr,async mid=>{
-    const[s,b]=await Promise.all([book(region,station,mid,"sell"),book(region,station,mid,"buy")]);
-    mPrice[mid]={sell:s.best,buy:b.best};done+=2;tick();
-  },8);
-
-  /* Volumen */
-  setS("Lade Volumen…",82);
-  const volCache={};
-  await pool(ids,async id=>{const v=await getVol(region,id);if(v!=null)volCache[id]=v;},6);
+  const priceTargets=[...liquid.map(id=>({id,store:iPrice})),...matArr.map(id=>({id,store:mPrice}))];
+  const total=priceTargets.length;let done=0;
+  const BATCH=400;
+  for(let bi=0;bi<priceTargets.length;bi+=BATCH){
+    const batch=priceTargets.slice(bi,bi+BATCH);
+    await pool(batch,async t=>{
+      const[s,b]=await Promise.all([book(region,station,t.id,"sell"),book(region,station,t.id,"buy")]);
+      t.store[t.id]={sell:s.best,buy:b.best};done++;
+      if(done%8===0)setS(`Marktpreise: ${done}/${total}…`,34+Math.round(done/total*48));
+    },8);
+    if(bi+BATCH<priceTargets.length){
+      const pause=Math.max(0,esiBlockUntil-Date.now())+1500;
+      setS(`Kurze Erholpause fürs ESI-Budget… (${done}/${total})`,34+Math.round(done/total*48));
+      await sleep(pause);
+    }
+  }
 
   /* Berechnung */
   setS("Berechne…",97);
@@ -671,10 +690,9 @@ async function runScan(){
   const tx=parseFloat($("tax").value)/100||0;
   const eff=calcYield();
   const minPct=parseFloat($("minProfit").value)||-9999;
-  const minVol=parseFloat($("minVol").value)||0;
 
   scanResults=[];
-  for(const id of ids){
+  for(const id of liquid){
     const ti=typeCache[id];if(!ti)continue;
     const mats=matsCache[id];if(!mats||!Object.keys(mats).length)continue;
     const portion=ti.portion_size||1;
