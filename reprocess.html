@@ -156,7 +156,7 @@ th[data-tip]:hover::after{right:auto;left:0}
         <span style="color:var(--dim);font-size:9px">lädt Skills + Gebühren</span>
       </div>
       <div class="hint" style="margin-top:5px">
-        Redirect-URI muss registriert sein:<br>
+        Callback läuft über <b>index.html</b> — dieselbe URI wie beim Market Scanner, keine neue Registrierung nötig:<br>
         <b id="cbUrl" style="color:var(--teal);word-break:break-all;font-size:9px"></b>
       </div>
       <div class="ssowarn" id="ssoWarn"></div>
@@ -386,12 +386,18 @@ function b64u(buf){let t="";const a=new Uint8Array(buf);for(let i=0;i<a.length;i
 function randStr(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b64u(a.buffer);}
 async function pkceChallenge(v){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return b64u(d);}
 function jwtPayload(t){try{const p=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");return JSON.parse(atob(p));}catch(e){return{};}}
+function ssoCallbackUrl(){
+  /* Nutzt index.html als Redirect-URI — die ist bereits bei CCP registriert.
+     Der Popup-Code in index.html erkennt den Callback und schickt ihn per
+     postMessage zurück an dieses Fenster. */
+  return new URL("index.html",location.href).href.split("?")[0];
+}
 async function ssoLogin(){
   if(location.protocol!=="https:"){$("ssoWarn").textContent="CCP erlaubt nur https-Callbacks.";return;}
   const v=randStr(),st=randStr();ssoPending={verifier:v,state:st};
   const ch=await pkceChallenge(v);
   const u=new URL("https://login.eveonline.com/v2/oauth/authorize");
-  u.search=new URLSearchParams({response_type:"code",redirect_uri:location.origin+location.pathname,client_id:SSO_CLIENT_ID,scope:SSO_SCOPES,state:st,code_challenge:ch,code_challenge_method:"S256"}).toString();
+  u.search=new URLSearchParams({response_type:"code",redirect_uri:ssoCallbackUrl(),client_id:SSO_CLIENT_ID,scope:SSO_SCOPES,state:st,code_challenge:ch,code_challenge_method:"S256"}).toString();
   window.open(u.toString(),"evesso","width=480,height=760");
   $("ssoWarn").textContent="Login-Fenster geöffnet…";
 }
@@ -807,7 +813,7 @@ function renderTable(){
   $("btnAllOff").addEventListener("click",()=>setAllGroups(false,$("catSearch").value));
   $("scanBtn").addEventListener("click",runScan);
 
-  $("cbUrl").textContent=location.origin+location.pathname;
+  $("cbUrl").textContent=ssoCallbackUrl();
 
   /* Katalog aus Cache laden falls vorhanden */
   const cached=loadCache();
