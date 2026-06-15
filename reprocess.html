@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEW EDEN // REPROCESSING</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070b0f;--panel:#0d141b;--panel2:#111b24;--line:#1d2c38;--txt:#c3d4de;--dim:#6f8493;--amber:#e8a13a;--teal:#3fb6b0;--green:#5fd07a;--red:#e06464;--gold:#f4c860;--grid:rgba(63,182,176,.05);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:12px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:34px 34px;min-height:100vh;padding:8px 12px;}
+.wrap{max-width:none;width:100%}
+header{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:7px;flex-wrap:wrap}
+h1{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:2px;font-size:15px;color:var(--amber);text-transform:uppercase}
+h1 span{color:var(--teal)}
+.sub{color:var(--dim);font-size:10px;letter-spacing:1px}
+.navlink{margin-left:auto;color:var(--teal);font-size:10px;text-decoration:none;border:1px solid var(--line);padding:3px 8px}
+.navlink:hover{border-color:var(--teal)}
+.ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px;margin-bottom:8px;align-items:start}
+.mod{background:var(--panel);border:1px solid var(--line);padding:6px 8px}
+.mod>.t{font-family:'Chakra Petch',sans-serif;font-size:9px;letter-spacing:1px;color:var(--teal);text-transform:uppercase;margin-bottom:5px;border-bottom:1px solid var(--line);padding-bottom:3px}
+label{display:block;color:var(--dim);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;margin:3px 0 2px}
+label:first-child{margin-top:0}
+input,select{background:var(--bg);border:1px solid var(--line);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 5px;width:100%}
+input[type=checkbox]{width:auto}
+input:focus,select:focus{outline:none;border-color:var(--teal)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.fld{min-width:0}
+.btn{background:var(--amber);color:#0a0a0a;border:none;font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:1px;font-size:11px;text-transform:uppercase;padding:6px;cursor:pointer;width:100%;transition:.12s}
+.btn:hover{background:var(--teal)}
+.btn:disabled{background:var(--line);color:var(--dim);cursor:wait}
+.btn.sm{font-size:9px;padding:3px 8px;background:transparent;border:1px solid var(--line);color:var(--dim);width:auto}
+.btn.sm:hover{border-color:var(--teal);color:var(--teal)}
+.btn.teal{background:transparent;border:1px solid var(--teal);color:var(--teal)}
+.btn.teal:hover{background:var(--teal);color:#0a0a0a}
+.hint{color:var(--dim);font-size:9px;line-height:1.5;margin-top:3px}
+.hint b{color:var(--txt)}
+.yield-big{font-family:'Chakra Petch',sans-serif;font-size:22px;font-weight:700;color:var(--gold);text-align:center;padding:5px 0 1px}
+.yield-sub{color:var(--dim);font-size:9px;text-align:center}
+/* Catalog section */
+.catpanel{background:var(--panel);border:1px solid var(--line);padding:6px 8px;margin-bottom:8px}
+.catpanel>.t{font-family:'Chakra Petch',sans-serif;font-size:9px;letter-spacing:1px;color:var(--teal);text-transform:uppercase;margin-bottom:5px;border-bottom:1px solid var(--line);padding-bottom:3px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cat-toolbar{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.cat-toolbar input[type=text]{width:200px;flex-shrink:0}
+.cat-count{color:var(--amber);font-size:10px;font-family:'Chakra Petch',sans-serif;letter-spacing:.5px}
+#catTree{max-height:320px;overflow-y:auto;border:1px solid var(--line);background:var(--bg);padding:3px 0}
+/* Tree nodes */
+details.cg{border-bottom:1px solid #0d1620}
+details.cg>summary{list-style:none;display:flex;align-items:center;gap:5px;padding:3px 6px;cursor:pointer;font-size:10px;color:var(--txt);user-select:none}
+details.cg>summary::-webkit-details-marker{display:none}
+details.cg>summary::before{content:"▸";color:var(--dim);font-size:8px;flex-shrink:0;transition:.1s}
+details.cg[open]>summary::before{transform:rotate(90deg)}
+details.cg>summary .gname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.cg>summary .gcount{color:var(--dim);font-size:8px;flex-shrink:0}
+div.cg-leaf{display:flex;align-items:center;gap:5px;padding:2px 6px;font-size:10px;color:var(--dim);border-bottom:1px solid #0a111a}
+div.cg-leaf .gname{flex:1}
+div.cg-leaf .gcount{font-size:8px}
+.cg-inner{padding-left:14px}
+/* Results */
+.data{background:var(--panel);border:1px solid var(--line);padding:8px 10px;width:100%}
+.status{margin-bottom:6px;color:var(--dim);font-size:10px;min-height:13px}
+.status b{color:var(--amber)}
+.bar{height:2px;background:var(--line);margin-bottom:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--teal);transition:width .3s}
+.recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:5px;margin-bottom:8px}
+.card{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--teal);padding:6px 8px}
+.card .v{font-family:'Chakra Petch',sans-serif;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--teal)}
+.card .nm{color:var(--txt);font-size:14px;font-family:'Chakra Petch',sans-serif;margin:2px 0}
+.card .px{color:var(--dim);font-size:9px}
+.secT{font-family:'Chakra Petch',sans-serif;font-size:10px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin:6px 0 5px;border-bottom:1px solid var(--line);padding-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-family:'Chakra Petch',sans-serif;font-weight:600;letter-spacing:.3px;text-transform:uppercase;font-size:8.5px;color:var(--dim);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+th:first-child,td:first-child{text-align:left}
+th:hover{color:var(--teal)}th.act{color:var(--amber)}
+td{padding:3px 6px;border-bottom:1px solid #131e27;text-align:right;white-space:nowrap}
+tr.mrow:hover td{background:var(--panel2);cursor:pointer}
+.pos{color:var(--green)}.neg{color:var(--red)}.dimv{color:var(--dim)}.name{color:var(--txt)}
+.tog{color:var(--dim);font-size:9px;display:inline-block;width:12px}
+.drow{display:none}
+.drow td{background:#090f14;padding:0}
+.drow .dinn{width:100%;border-collapse:collapse}
+.drow .dinn td{border:none;padding:2px 8px;font-size:10px;background:transparent}
+.drow .dinn td:first-child{color:var(--dim)}
+.drow .dinn .srow td{border-top:1px solid var(--line);padding-top:4px;color:var(--txt)}
+[data-tip]{position:relative;cursor:help}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;right:0;top:100%;z-index:90;background:#0c1219;border:1px solid var(--teal);color:var(--txt);padding:7px 9px;font-size:10px;line-height:1.5;max-width:300px;white-space:normal;text-align:left;pointer-events:none;margin-top:4px;box-shadow:0 8px 20px rgba(0,0,0,.7)}
+th[data-tip]:hover::after{right:auto;left:0}
+.ssorow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ssowarn{color:var(--red);font-size:9px;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>NEW EDEN <span>// REPROCESSING</span></h1>
+  <div class="sub">ESI live · Fuzzwork SDE · Ausbeute · Gebühren · Reingewinn</div>
+  <a class="navlink" href="index.html">◀ Market Scanner</a>
+</header>
+
+<div class="ctrl">
+  <!-- ① Station & Gebühren -->
+  <div class="mod">
+    <div class="t">① Station &amp; Gebühren</div>
+    <label>Handels-Hub</label>
+    <select id="hubSel"></select>
+    <div class="g2">
+      <div class="fld">
+        <label data-tip="Brokergebühr beim Aufgeben von Kauf- und Verkaufsorders.">Broker %</label>
+        <input id="broker" type="number" step="0.01" value="1.50">
+      </div>
+      <div class="fld">
+        <label data-tip="Sales Tax beim Füllen eigener Verkaufsorders.">Sales Tax %</label>
+        <input id="tax" type="number" step="0.01" value="3.37">
+      </div>
+    </div>
+    <div class="hint" id="feeHint"></div>
+  </div>
+
+  <!-- ② Reprocessing -->
+  <div class="mod">
+    <div class="t">② Reprocessing &amp; Ausbeute</div>
+    <label>Stations-Basiseffizienz</label>
+    <select id="stBase">
+      <option value="0.50">NPC Station — 50 %</option>
+      <option value="0.54">Athanor / Tatara (keine Rigs) — 54 %</option>
+      <option value="0.56">Athanor + T1 Rig — 56 %</option>
+      <option value="0.575">Tatara + T2 Rig — 57,5 %</option>
+    </select>
+    <div class="g3">
+      <div class="fld">
+        <label data-tip="Reprocessing (ID 3385): +3 % pro Stufe.">Reproc.</label>
+        <select id="skR"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+      </div>
+      <div class="fld">
+        <label data-tip="Reprocessing Efficiency (ID 3389): +2 % pro Stufe.">Effizienz</label>
+        <select id="skE"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+      </div>
+      <div class="fld">
+        <label data-tip="Item-spezifischer Skill, z.B. Scrapmetal Processing (12196) für Module/Ammo. +2 % pro Stufe.">Item-Skill</label>
+        <select id="skS"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+      </div>
+    </div>
+    <div class="yield-big" id="yieldDisplay">69,58 %</div>
+    <div class="yield-sub" id="yieldSub">50 % × 1,15 × 1,10 × 1,10</div>
+  </div>
+
+  <!-- ③ SSO -->
+  <div class="mod">
+    <div class="t">③ Charakter (SSO)</div>
+    <div id="ssoOff">
+      <div class="ssorow">
+        <button class="btn teal" onclick="ssoLogin()" style="width:auto;padding:5px 14px">Einloggen</button>
+        <span style="color:var(--dim);font-size:9px">lädt Skills + Gebühren</span>
+      </div>
+      <div class="hint" style="margin-top:5px">
+        Redirect-URI muss registriert sein:<br>
+        <b id="cbUrl" style="color:var(--teal);word-break:break-all;font-size:9px"></b>
+      </div>
+      <div class="ssowarn" id="ssoWarn"></div>
+    </div>
+    <div id="ssoOn" style="display:none">
+      <div class="ssorow">
+        <span id="ssoWho" style="color:var(--green);font-size:11px"></span>
+        <button class="btn sm" onclick="ssoLogout()">Logout</button>
+      </div>
+      <div id="ssoSkills" class="hint" style="margin-top:5px"></div>
+    </div>
+  </div>
+</div><!-- /ctrl -->
+
+<!-- ④ Katalog -->
+<div class="catpanel">
+  <div class="t">
+    <span>④ Katalog — Marktgruppen auswählen</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <span id="cacheInfo" class="hint" style="margin:0"></span>
+      <button id="loadBtn" class="btn sm" onclick="loadCatalog(false)">Katalog laden</button>
+      <button class="btn sm" onclick="loadCatalog(true)">↻ Neu laden</button>
+    </span>
+  </div>
+  <div id="catLoading" class="hint">Noch nicht geladen — klicke <b>Katalog laden</b>. Einmalig ~10–20 s, danach 24 h aus Cache.</div>
+  <div id="catControls" style="display:none">
+    <div class="cat-toolbar">
+      <input type="text" id="catSearch" placeholder="Gruppen filtern…" style="width:220px">
+      <button class="btn sm" id="btnAllOn">Alle an</button>
+      <button class="btn sm" id="btnAllOff">Alle aus</button>
+      <span class="cat-count" id="selCount">0 Items ausgewählt</span>
+    </div>
+    <div id="catTree"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+      <button id="scanBtn" class="btn" style="flex:1;min-width:160px;margin-top:0">► Scannen</button>
+      <div class="g2" style="flex:1;min-width:240px;gap:4px">
+        <div class="fld">
+          <label data-tip="Items mit Gewinn-A unter diesem Wert ausblenden.">Min Gewinn A %</label>
+          <input id="minProfit" type="number" step="1" value="-9999">
+        </div>
+        <div class="fld">
+          <label data-tip="Items mit weniger als diesem Tagesvolumen ausblenden. 0 = kein Filter.">Min Vol/Tag</label>
+          <input id="minVol" type="number" step="1" value="0">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ergebnisse -->
+<div class="data" id="dataArea" style="display:none">
+  <div class="status" id="status"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="recs" id="cards"></div>
+  <div class="secT">
+    Ergebnisse — pro Portion (Mindest-Reprocessing-Batch)
+    <span style="font-size:9px;font-weight:400;color:var(--dim)">▸ Zeile anklicken für Materialdetails</span>
+  </div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr>
+      <th data-col="name">Item</th>
+      <th data-col="portionSize" data-tip="Mindestmenge pro Reprocessing-Batch.">Portion</th>
+      <th data-col="itemSell" data-tip="Günstigste Verkaufsorder (Sofortkauf).">Item Sofort</th>
+      <th data-col="itemBuy" data-tip="Bestes Gebot — Referenz für deine Kauforder.">Item Gebot</th>
+      <th data-col="matRevSell" data-tip="Nettoerlös der Mineralien via Sell-Order (abzgl. Broker + Tax).">Mat. Sell-Order</th>
+      <th data-col="matRevBuy" data-tip="Soforterlös bei Verkauf an Kauforders — keine Gebühren.">Mat. Sofort-Sell</th>
+      <th data-col="profitA" data-tip="Szenario A: Sofortkauf Item → Sell-Order Mineralien.">Gew. A</th>
+      <th data-col="profitA_pct" data-tip="Gewinn A als % des eingesetzten Kapitals.">A %</th>
+      <th data-col="profitB" data-tip="Szenario B: Kauforder Item (inkl. Broker) → Sell-Order Mineralien.">Gew. B</th>
+      <th data-col="profitB_pct" data-tip="Gewinn B als % des eingesetzten Kapitals.">B %</th>
+      <th data-col="vol" data-tip="Ø Tagesvolumen der letzten 5 Tage.">Vol/Tag</th>
+      <th data-col="iskPerDay" data-tip="Gew. A × Volumen/Portion — grobe Tagesschätzung.">ISK/Tag (A)</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  </div>
+  <div class="hint" style="margin-top:8px">
+    <b>Szenario A</b>: Sofortkauf des Items (kein Broker) → Sell-Order für Mineralien (−Broker−Tax). &nbsp;
+    <b>Szenario B</b>: eigene Kauforder (du zahlst Broker auf Einkauf) → Sell-Order Mineralien. &nbsp;
+    Stations-Reprocessing-Tax (Standings-abhängig) ist nicht eingerechnet — bei NPC-Stationen mit ≥ 6,67 Standings entfällt sie.
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<script>
+'use strict';
+/* ===== Konstanten ===== */
+const ESI="https://esi.evetech.net/latest",DS="tranquility";
+const ALL_HUBS=[
+  {key:"JITA",label:"Jita IV-4",      region:10000002,station:60003760},
+  {key:"AMA", label:"Amarr VIII",     region:10000043,station:60008494},
+  {key:"DOD", label:"Dodixie IX-20",  region:10000032,station:60011866},
+  {key:"REN", label:"Rens VI-8",      region:10000030,station:60004588},
+  {key:"HEK", label:"Hek VIII-12",    region:10000042,station:60005686}
+];
+const HUBKEY={};ALL_HUBS.forEach(h=>HUBKEY[h.key]=h);
+const SSO_CLIENT_ID="1ddd59da544449649840fd57a62dea6d";
+const SSO_SCOPES="esi-skills.read_skills.v1";
+const SKILL_ACCOUNTING=16622,SKILL_BROKER=3446,SKILL_REPROC=3385,SKILL_EFF=3389,SKILL_SCRP=12196;
+const $=id=>document.getElementById(id);
+const CACHE_KEY="eve_reproc_mktgroups_v1",CACHE_TTL=864e5; /* 24 h */
+
+/* ===== Zustand ===== */
+let HOME=HUBKEY["JITA"];
+let sso={access:null,refresh:null,charId:null,name:null,timer:null};
+let ssoPending=null;
+let esiBlockUntil=0;
+let mktGroups=new Map();   /* id → {id,name,parentId,types[],children[]} */
+let mktRoots=[];
+let checkedGroups=new Set();
+let cbMap=new Map();       /* groupId → checkbox element */
+let scanResults=[];
+let sortCol="profitA",sortDir=-1;
+
+/* ===== Utils ===== */
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function sleepCap(ms){return sleep(Math.min(ms,15000));}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function fmtISK(n,d=2){
+  if(n==null||isNaN(n))return"–";
+  const a=Math.abs(n),s=n<0?"-":"";
+  if(a>=1e9)return s+(a/1e9).toFixed(d)+"B";
+  if(a>=1e6)return s+(a/1e6).toFixed(d)+"M";
+  if(a>=1e3)return s+(a/1e3).toFixed(1)+"K";
+  return s+a.toFixed(0);
+}
+function fmtPct(n){if(n==null||isNaN(n))return"–";return(n>=0?"+":"")+n.toFixed(1)+"%";}
+function fmtNum(n){if(n==null||isNaN(n))return"–";return Math.round(n).toLocaleString("de-DE");}
+function pcls(v){return v==null?"dimv":v>0?"pos":"neg";}
+
+/* ===== Ausbeute ===== */
+function calcYield(){
+  const b=parseFloat($("stBase").value)||0.5;
+  const r=+$("skR").value,e=+$("skE").value,s=+$("skS").value;
+  return b*(1+0.03*r)*(1+0.02*e)*(1+0.02*s);
+}
+function updateYield(){
+  const b=parseFloat($("stBase").value)||0.5;
+  const r=+$("skR").value,e=+$("skE").value,s=+$("skS").value;
+  const y=b*(1+0.03*r)*(1+0.02*e)*(1+0.02*s);
+  $("yieldDisplay").textContent=(y*100).toFixed(2).replace(".",",")+" %";
+  $("yieldSub").textContent=`${(b*100).toFixed(0)} % × ${(1+0.03*r).toFixed(2)} × ${(1+0.02*e).toFixed(2)} × ${(1+0.02*s).toFixed(2)}`;
+}
+
+/* ===== ESI Helfer ===== */
+async function getJSON(url){
+  for(let att=0;att<10;att++){
+    let wait=esiBlockUntil-Date.now();
+    while(wait>0){await sleepCap(wait);wait=esiBlockUntil-Date.now();}
+    let r;const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
+    try{r=await fetch(url,{signal:ctl.signal});}
+    catch(e){clearTimeout(to);await sleep(1000+600*att);continue;}
+    clearTimeout(to);
+    const rem=parseInt(r.headers.get("x-esi-error-limit-remain")||"100",10);
+    let rst=parseInt(r.headers.get("x-esi-error-limit-reset")||"10",10);if(rst>60)rst=60;
+    if(rem<25)esiBlockUntil=Math.max(esiBlockUntil,Date.now()+Math.min(rst+1,15)*1000);
+    if(r.ok)return{data:await r.json(),pages:parseInt(r.headers.get("x-pages")||"1",10)};
+    if(r.status===400||r.status===404)return{notFound:true};
+    if(r.status===420||r.status===429||r.status>=500){
+      esiBlockUntil=Math.max(esiBlockUntil,Date.now()+Math.min(rst+1,15)*1000+Math.random()*400);
+      await sleepCap(800+600*att);continue;
+    }
+    return{notFound:true};
+  }
+  return{failed:true};
+}
+async function authJSON(url){
+  for(let att=0;att<5;att++){
+    const wait=esiBlockUntil-Date.now();if(wait>0)await sleep(wait);
+    let r;const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),15000);
+    try{r=await fetch(url,{signal:ctl.signal,headers:{Authorization:"Bearer "+sso.access}});}
+    catch(e){clearTimeout(to);await sleep(1200*(att+1));continue;}
+    clearTimeout(to);
+    const rem=parseInt(r.headers.get("x-esi-error-limit-remain")||"100",10);
+    const rst=parseInt(r.headers.get("x-esi-error-limit-reset")||"10",10);
+    if(rem<20)esiBlockUntil=Math.max(esiBlockUntil,Date.now()+(rst+1)*1000);
+    if(r.ok)return{data:await r.json()};
+    if(r.status===401||r.status===403)return{auth:true};
+    if(r.status===420||r.status===429||r.status>=500){esiBlockUntil=Math.max(esiBlockUntil,Date.now()+(rst+2)*1000);continue;}
+    return{failed:true};
+  }
+  return{failed:true};
+}
+async function pool(items,fn,limit,onTick){
+  let i=0,done=0;
+  async function w(){while(i<items.length){const k=i++;await fn(items[k]);if(onTick)onTick(++done);}}
+  await Promise.all(Array.from({length:Math.min(limit,items.length||1)},w));
+}
+async function book(region,station,typeId,side){
+  const url=p=>ESI+"/markets/"+region+"/orders/?datasource="+DS+"&order_type="+side+"&type_id="+typeId+"&page="+p;
+  const first=await getJSON(url(1));
+  if(first.failed||first.notFound)return{best:null};
+  const prices=[];
+  const push=arr=>{if(!arr)return;for(const o of arr){if(o.location_id===station)prices.push(o.price);}};
+  push(first.data);
+  const pages=Math.min(first.pages||1,8);
+  if(pages>1){const rest=await Promise.all(Array.from({length:pages-1},(_,k)=>getJSON(url(k+2))));for(const r of rest){if(r&&r.data)push(r.data);}}
+  if(!prices.length)return{best:null};
+  prices.sort((a,b)=>side==="sell"?a-b:b-a);
+  return{best:prices[0]};
+}
+async function getVol(region,typeId){
+  const res=await getJSON(ESI+"/markets/"+region+"/history/?datasource="+DS+"&type_id="+typeId);
+  if(!res.data||!res.data.length)return null;
+  const sl=res.data.slice(-5);
+  return sl.reduce((s,d)=>s+d.volume,0)/sl.length;
+}
+
+/* ===== Fuzzwork ===== */
+async function getFuzzMats(typeId){
+  try{
+    const r=await fetch("https://www.fuzzwork.co.uk/api/typematerials.php?typeid="+typeId);
+    if(!r.ok)return null;
+    const j=await r.json();
+    if(!j||!j.materials)return{};
+    const out={};
+    for(const[mid,info]of Object.entries(j.materials)){
+      out[parseInt(mid)]={qty:parseInt(info.quantity),name:info.name||("#"+mid)};
+    }
+    return out;
+  }catch(e){return null;}
+}
+
+/* ===== SSO / PKCE ===== */
+function b64u(buf){let t="";const a=new Uint8Array(buf);for(let i=0;i<a.length;i++)t+=String.fromCharCode(a[i]);return btoa(t).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function randStr(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b64u(a.buffer);}
+async function pkceChallenge(v){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return b64u(d);}
+function jwtPayload(t){try{const p=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");return JSON.parse(atob(p));}catch(e){return{};}}
+async function ssoLogin(){
+  if(location.protocol!=="https:"){$("ssoWarn").textContent="CCP erlaubt nur https-Callbacks.";return;}
+  const v=randStr(),st=randStr();ssoPending={verifier:v,state:st};
+  const ch=await pkceChallenge(v);
+  const u=new URL("https://login.eveonline.com/v2/oauth/authorize");
+  u.search=new URLSearchParams({response_type:"code",redirect_uri:location.origin+location.pathname,client_id:SSO_CLIENT_ID,scope:SSO_SCOPES,state:st,code_challenge:ch,code_challenge_method:"S256"}).toString();
+  window.open(u.toString(),"evesso","width=480,height=760");
+  $("ssoWarn").textContent="Login-Fenster geöffnet…";
+}
+window.addEventListener("message",async ev=>{
+  if(ev.origin!==location.origin)return;
+  const d=ev.data;
+  if(!d||!d.eveSsoCode||!ssoPending||d.state!==ssoPending.state)return;
+  const pend=ssoPending;ssoPending=null;
+  $("ssoWarn").textContent="Tausche Token…";
+  try{const j=await tokenReq({grant_type:"authorization_code",code:d.eveSsoCode,client_id:SSO_CLIENT_ID,code_verifier:pend.verifier});$("ssoWarn").textContent="";onToken(j);}
+  catch(e){$("ssoWarn").textContent="Token-Tausch fehlgeschlagen: "+e.message;}
+});
+async function tokenReq(body){
+  const r=await fetch("https://login.eveonline.com/v2/oauth/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams(body)});
+  if(!r.ok)throw new Error("HTTP "+r.status);return r.json();
+}
+function onToken(j){
+  sso.access=j.access_token;sso.refresh=j.refresh_token||sso.refresh;
+  const p=jwtPayload(sso.access);sso.name=p.name||"?";sso.charId=(p.sub||"").split(":").pop();
+  $("ssoOff").style.display="none";$("ssoOn").style.display="block";$("ssoWho").textContent="✓ "+sso.name;
+  if(sso.timer)clearTimeout(sso.timer);
+  sso.timer=setTimeout(refreshToken,Math.max(60,(j.expires_in||1200)-90)*1000);
+  loadSkills();
+}
+async function refreshToken(){
+  if(!sso.refresh)return;
+  try{const j=await tokenReq({grant_type:"refresh_token",refresh_token:sso.refresh,client_id:SSO_CLIENT_ID});onToken(j);}
+  catch(e){$("ssoWho").textContent="Session abgelaufen.";}
+}
+function ssoLogout(){
+  if(sso.timer)clearTimeout(sso.timer);
+  sso={access:null,refresh:null,charId:null,name:null,timer:null};
+  $("ssoOn").style.display="none";$("ssoOff").style.display="block";$("ssoSkills").textContent="";
+}
+async function loadSkills(){
+  $("ssoSkills").textContent="Lade Skills…";
+  const res=await authJSON(ESI+"/characters/"+sso.charId+"/skills/?datasource="+DS);
+  if(!res.data){$("ssoSkills").innerHTML='<span style="color:var(--red)">Skills nicht ladbar.</span>';return;}
+  const sk={};(res.data.skills||[]).forEach(x=>{sk[x.skill_id]=x.active_skill_level;});
+  const rL=sk[SKILL_REPROC]||0,eL=sk[SKILL_EFF]||0,sL=sk[SKILL_SCRP]||0;
+  const acc=sk[SKILL_ACCOUNTING]||0,br=sk[SKILL_BROKER]||0;
+  $("skR").value=rL;$("skE").value=eL;$("skS").value=sL;
+  const tax=7.5*(1-0.11*acc),brk=Math.max(0,3-0.3*br);
+  $("tax").value=tax.toFixed(2);$("broker").value=brk.toFixed(2);
+  $("ssoSkills").textContent=`Reproc. ${rL} · Effizienz ${eL} · Scrapmetal ${sL}`;
+  $("feeHint").textContent=`Accounting ${acc} → Tax ${tax.toFixed(2)} % · Broker Rel. ${br} → ${brk.toFixed(2)} %`;
+  updateYield();
+}
+
+/* ===== Katalog / LocalStorage ===== */
+function loadCache(){
+  try{const s=localStorage.getItem(CACHE_KEY);if(!s)return null;const c=JSON.parse(s);if(Date.now()-c.ts>CACHE_TTL){localStorage.removeItem(CACHE_KEY);return null;}return c.data;}
+  catch(e){return null;}
+}
+function saveCache(data){
+  try{localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}
+}
+
+async function loadCatalog(force=false){
+  if(!force){const cached=loadCache();if(cached){initGroups(cached,true);return;}}
+  $("loadBtn").disabled=true;
+  $("catLoading").style.display="block";
+  $("catControls").style.display="none";
+  $("catLoading").textContent="Lade Gruppen-IDs von ESI…";
+
+  const idsRes=await getJSON(ESI+"/markets/groups/?datasource="+DS);
+  if(!idsRes.data){$("catLoading").textContent="ESI-Fehler. Bitte Seite neu laden.";$("loadBtn").disabled=false;return;}
+  const ids=idsRes.data;
+  const raw=[];let done=0;
+  $("catLoading").textContent=`Lade ${ids.length} Marktgruppen…`;
+  await pool(ids,async id=>{
+    const res=await getJSON(ESI+"/markets/groups/"+id+"/?datasource="+DS);
+    if(res.data)raw.push({id,name:res.data.name||"#"+id,parentId:res.data.parent_group_id??null,types:res.data.types||[]});
+    done++;
+    if(done%30===0)$("catLoading").textContent=`Lade Katalog: ${done}/${ids.length}…`;
+  },30);
+
+  saveCache(raw);
+  initGroups(raw,false);
+  $("loadBtn").disabled=false;
+}
+
+function initGroups(raw,fromCache){
+  mktGroups=new Map();
+  for(const g of raw)mktGroups.set(g.id,{...g,children:[]});
+  mktRoots=[];
+  for(const g of mktGroups.values()){
+    if(g.parentId&&mktGroups.has(g.parentId))mktGroups.get(g.parentId).children.push(g);
+    else mktRoots.push(g);
+  }
+  function srt(arr){arr.sort((a,b)=>a.name.localeCompare(b.name,"de"));arr.forEach(g=>srt(g.children));}
+  srt(mktRoots);
+
+  let totalTypes=0;for(const g of mktGroups.values())totalTypes+=g.types.length;
+  const ts=fromCache?(()=>{try{return new Date(JSON.parse(localStorage.getItem(CACHE_KEY)).ts).toLocaleString("de-DE");}catch(e){return"?";}}()):"gerade";
+  $("cacheInfo").textContent=fromCache?`Cache vom ${ts}`:"";
+  $("catLoading").style.display="none";
+  $("catControls").style.display="block";
+  renderCatTree("");
+}
+
+/* ===== Baum rendern ===== */
+function renderCatTree(filter){
+  const fl=filter.toLowerCase().trim();
+  cbMap.clear();
+  const container=$("catTree");container.innerHTML="";
+
+  function typeCount(g){
+    let n=g.types.length;for(const c of g.children)n+=typeCount(c);return n;
+  }
+  function matchesFilter(g){
+    if(!fl)return true;
+    if(g.name.toLowerCase().includes(fl))return true;
+    return g.children.some(c=>matchesFilter(c));
+  }
+  function allChecked(g){
+    if(!checkedGroups.has(g.id))return false;
+    return g.children.every(c=>allChecked(c));
+  }
+  function anyChecked(g){
+    if(checkedGroups.has(g.id))return true;
+    return g.children.some(c=>anyChecked(c));
+  }
+
+  function buildNode(g,depth){
+    if(fl&&!matchesFilter(g))return null;
+    const total=typeCount(g);
+    if(total===0)return null;
+
+    const hasChildren=g.children.filter(c=>!fl||matchesFilter(c)).length>0;
+
+    const wrap=document.createElement(hasChildren?"details":"div");
+    wrap.className=hasChildren?"cg":"";
+    if(fl&&hasChildren)wrap.setAttribute("open","");
+
+    const hdr=document.createElement(hasChildren?"summary":"div");
+    hdr.className=hasChildren?"":"cg-leaf";
+    if(!hasChildren)hdr.style.paddingLeft=(depth*12+6)+"px";
+
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.dataset.gid=g.id;
+    const all=allChecked(g),any=anyChecked(g);
+    cb.checked=all;cb.indeterminate=!all&&any;
+    cb.addEventListener("change",ev=>{ev.stopPropagation();toggleGroup(g,ev.target.checked);});
+    cbMap.set(g.id,cb);
+
+    hdr.appendChild(cb);
+    const span=document.createElement("span");span.className="gname";span.textContent=g.name;
+    hdr.appendChild(span);
+    const cc=document.createElement("span");cc.className="gcount";cc.textContent="("+fmtNum(total)+")";
+    hdr.appendChild(cc);
+    wrap.appendChild(hdr);
+
+    if(hasChildren){
+      const inner=document.createElement("div");inner.className="cg-inner";
+      for(const child of g.children){
+        const el=buildNode(child,depth+1);if(el)inner.appendChild(el);
+      }
+      wrap.appendChild(inner);
+    }
+    return wrap;
+  }
+
+  for(const root of mktRoots){
+    const el=buildNode(root,0);if(el)container.appendChild(el);
+  }
+  updateSelCount();
+}
+
+function toggleGroup(g,checked){
+  function applyDown(grp){
+    if(checked)checkedGroups.add(grp.id);else checkedGroups.delete(grp.id);
+    for(const c of grp.children)applyDown(c);
+  }
+  applyDown(g);
+  /* Ancestors aktualisieren */
+  function updateUp(grp){
+    if(!grp.parentId)return;
+    const par=mktGroups.get(grp.parentId);if(!par)return;
+    const cb=cbMap.get(par.id);if(!cb)return;
+    const all=allCheckedFn(par),any=anyCheckedFn(par);
+    cb.checked=all;cb.indeterminate=!all&&any;
+    if(all)checkedGroups.add(par.id);else checkedGroups.delete(par.id);
+    updateUp(par);
+  }
+  updateUp(g);
+  /* Eigene Checkbox aktualisieren */
+  const own=cbMap.get(g.id);if(own){own.checked=checked;own.indeterminate=false;}
+  /* Kinder-Checkboxen */
+  function updateDown(grp){
+    const cb=cbMap.get(grp.id);if(cb){cb.checked=checked;cb.indeterminate=false;}
+    for(const c of grp.children)updateDown(c);
+  }
+  for(const c of g.children)updateDown(c);
+  updateSelCount();
+}
+function allCheckedFn(g){return checkedGroups.has(g.id)&&g.children.every(c=>allCheckedFn(c));}
+function anyCheckedFn(g){return checkedGroups.has(g.id)||g.children.some(c=>anyCheckedFn(c));}
+
+function getSelectedTypes(){
+  const types=[];
+  for(const[id,g]of mktGroups){if(checkedGroups.has(id))types.push(...g.types);}
+  return[...new Set(types)];
+}
+function updateSelCount(){
+  const n=getSelectedTypes().length;
+  $("selCount").textContent=n.toLocaleString("de-DE")+" Items ausgewählt";
+}
+
+function setAllGroups(checked,filter){
+  const fl=(filter||"").toLowerCase().trim();
+  function apply(g){
+    if(fl&&!g.name.toLowerCase().includes(fl)&&!g.children.some(c=>c.name.toLowerCase().includes(fl))){}
+    if(checked)checkedGroups.add(g.id);else checkedGroups.delete(g.id);
+    for(const c of g.children)apply(c);
+  }
+  for(const r of mktRoots)apply(r);
+  renderCatTree(filter||"");
+}
+
+/* ===== Scan ===== */
+async function runScan(){
+  const ids=getSelectedTypes();
+  if(!ids.length){alert("Keine Items ausgewählt.");return;}
+
+  const btn=$("scanBtn");btn.disabled=true;
+  $("dataArea").style.display="block";
+  $("tbody").innerHTML="";$("cards").innerHTML="";
+  const setS=(msg,pct)=>{$("status").innerHTML=msg;$("bar").style.width=(pct||0)+"%";};
+
+  /* Typinfo */
+  setS(`Lade Typinfo für ${ids.length} Items…`,5);
+  const typeCache={};
+  await pool(ids,async id=>{
+    const res=await getJSON(ESI+"/universe/types/"+id+"/?datasource="+DS);
+    if(res.data)typeCache[id]=res.data;
+  },10);
+
+  /* Fuzzwork Materialien */
+  setS("Lade Reprocessing-Daten (Fuzzwork)…",18);
+  const matsCache={};
+  await pool(ids,async id=>{matsCache[id]=await getFuzzMats(id);},6);
+
+  /* Eindeutige Material-IDs */
+  const allMatIds=new Set();
+  for(const id of ids){const m=matsCache[id];if(m)for(const mid of Object.keys(m))allMatIds.add(parseInt(mid));}
+  const matArr=[...allMatIds];
+
+  /* Marktpreise */
+  const region=HOME.region,station=HOME.station;
+  const iPrice={},mPrice={};
+  let done=0,total=ids.length*2+matArr.length*2;
+  const tick=()=>setS(`Marktpreise: ${done}/${total}…`,30+Math.round(done/total*50));
+
+  await pool(ids,async id=>{
+    const[s,b]=await Promise.all([book(region,station,id,"sell"),book(region,station,id,"buy")]);
+    iPrice[id]={sell:s.best,buy:b.best};done+=2;tick();
+  },8);
+  await pool(matArr,async mid=>{
+    const[s,b]=await Promise.all([book(region,station,mid,"sell"),book(region,station,mid,"buy")]);
+    mPrice[mid]={sell:s.best,buy:b.best};done+=2;tick();
+  },8);
+
+  /* Volumen */
+  setS("Lade Volumen…",82);
+  const volCache={};
+  await pool(ids,async id=>{const v=await getVol(region,id);if(v!=null)volCache[id]=v;},6);
+
+  /* Berechnung */
+  setS("Berechne…",97);
+  const brk=parseFloat($("broker").value)/100||0;
+  const tx=parseFloat($("tax").value)/100||0;
+  const eff=calcYield();
+  const minPct=parseFloat($("minProfit").value)||-9999;
+  const minVol=parseFloat($("minVol").value)||0;
+
+  scanResults=[];
+  for(const id of ids){
+    const ti=typeCache[id];if(!ti)continue;
+    const mats=matsCache[id];if(!mats||!Object.keys(mats).length)continue;
+    const portion=ti.portion_size||1;
+    const ip=iPrice[id]||{};
+    if(ip.sell==null&&ip.buy==null)continue;
+
+    let matRevSell=0,matRevBuy=0;
+    const details=[];
+    for(const[midS,{qty:baseQty,name:matName}]of Object.entries(mats)){
+      const mid=parseInt(midS);
+      const received=Math.floor(baseQty*eff);if(received<=0)continue;
+      const mp=mPrice[mid]||{};
+      const vSell=mp.sell!=null?received*mp.sell:null;
+      const vBuy=mp.buy!=null?received*mp.buy:null;
+      if(vSell!=null)matRevSell+=vSell;
+      if(vBuy!=null)matRevBuy+=vBuy;
+      details.push({id:mid,name:matName,baseQty,received,sellP:mp.sell,buyP:mp.buy,vSell,vBuy});
+    }
+    const matRevSellNet=matRevSell*(1-brk-tx);
+    const costInstant=ip.sell!=null?portion*ip.sell:null;
+    const costOrder=ip.buy!=null?portion*ip.buy*(1+brk):null;
+    const profitA=costInstant!=null?matRevSellNet-costInstant:null;
+    const profitB=costOrder!=null?matRevSellNet-costOrder:null;
+    const profitA_pct=profitA!=null&&costInstant>0?profitA/costInstant*100:null;
+    const profitB_pct=profitB!=null&&costOrder>0?profitB/costOrder*100:null;
+    const vol=volCache[id]??null;
+    const iskPerDay=profitA!=null&&vol!=null?profitA*(vol/portion):null;
+
+    if(profitA_pct!=null&&profitA_pct<minPct)continue;
+    if(minVol>0&&(vol==null||vol<minVol))continue;
+
+    scanResults.push({id,name:ti.name,portion,itemSell:ip.sell,itemBuy:ip.buy,
+      matRevSell:matRevSellNet,matRevBuy,costInstant,costOrder,
+      profitA,profitA_pct,profitB,profitB_pct,vol,iskPerDay,details,eff});
+  }
+
+  renderTable();
+  btn.disabled=false;
+  const pos=scanResults.filter(r=>r.profitA>0).length;
+  setS(`<b>${scanResults.length}</b> Items · <b>${pos}</b> profitabel (Szen. A)`,100);
+}
+
+/* ===== Tabelle ===== */
+function renderTable(){
+  const sorted=[...scanResults].sort((a,b)=>{
+    let va=a[sortCol],vb=b[sortCol];
+    if(va==null)va=sortDir>0?Infinity:-Infinity;
+    if(vb==null)vb=sortDir>0?Infinity:-Infinity;
+    if(typeof va==="string")return sortDir*va.localeCompare(vb);
+    return sortDir*(va-vb);
+  });
+  const pos=sorted.filter(r=>r.profitA>0).length;
+  const posB=sorted.filter(r=>r.profitB>0).length;
+  const bestDay=sorted.reduce((m,r)=>r.iskPerDay!=null&&r.iskPerDay>m?r.iskPerDay:m,0);
+  $("cards").innerHTML=`
+    <div class="card"><div class="v">Gescannt</div><div class="nm">${sorted.length}</div><div class="px">Items mit Reproc.-Daten</div></div>
+    <div class="card"><div class="v">Profitabel A</div><div class="nm" style="color:var(--green)">${pos}</div><div class="px">Sofortkauf → Sell-Order</div></div>
+    <div class="card"><div class="v">Profitabel B</div><div class="nm" style="color:var(--teal)">${posB}</div><div class="px">Kauforder → Sell-Order</div></div>
+    <div class="card"><div class="v">Best ISK/Tag A</div><div class="nm" style="color:var(--gold)">${fmtISK(bestDay,1)}</div><div class="px">Gew. A × Volumen</div></div>
+    <div class="card"><div class="v">Ausbeute</div><div class="nm" style="color:var(--amber)">${(calcYield()*100).toFixed(2).replace(".",",")} %</div><div class="px">effektiv</div></div>`;
+
+  const brk=parseFloat($("broker").value)/100||0;
+  const tx=parseFloat($("tax").value)/100||0;
+  const tbody=$("tbody");tbody.innerHTML="";
+  for(const r of sorted){
+    const tr=document.createElement("tr");tr.className="mrow";
+    tr.innerHTML=
+      `<td class="name"><span class="tog">▸</span>${esc(r.name)}</td>`+
+      `<td class="dimv">${fmtNum(r.portion)}</td>`+
+      `<td>${r.itemSell!=null?fmtISK(r.itemSell):"–"}</td>`+
+      `<td class="dimv">${r.itemBuy!=null?fmtISK(r.itemBuy):"–"}</td>`+
+      `<td>${fmtISK(r.matRevSell)}</td>`+
+      `<td class="dimv">${fmtISK(r.matRevBuy)}</td>`+
+      `<td class="${pcls(r.profitA)}">${fmtISK(r.profitA)}</td>`+
+      `<td class="${pcls(r.profitA_pct)}">${fmtPct(r.profitA_pct)}</td>`+
+      `<td class="${pcls(r.profitB)}">${fmtISK(r.profitB)}</td>`+
+      `<td class="${pcls(r.profitB_pct)}">${fmtPct(r.profitB_pct)}</td>`+
+      `<td class="dimv">${r.vol!=null?fmtNum(r.vol):"–"}</td>`+
+      `<td class="${pcls(r.iskPerDay)}">${fmtISK(r.iskPerDay,1)}</td>`;
+
+    const dtr=document.createElement("tr");dtr.className="drow";
+    const matRows=r.details.map(m=>`<tr>
+      <td style="width:28%;color:var(--txt)">${esc(m.name)}</td>
+      <td>SDE ${fmtNum(m.baseQty)} → <b style="color:var(--teal)">${fmtNum(m.received)}</b> erhalten</td>
+      <td>${m.sellP!=null?fmtISK(m.sellP)+" Sell":"–"}</td>
+      <td>${m.buyP!=null?fmtISK(m.buyP)+" Buy":"–"}</td>
+      <td class="pos">${fmtISK(m.vSell)} <span class="dimv">(Sell-Order)</span></td>
+      <td class="dimv">${fmtISK(m.vBuy)} <span class="dimv">(Sofort)</span></td>
+    </tr>`).join("");
+    const bruttoSell=r.details.reduce((s,m)=>m.vSell!=null?s+m.vSell:s,0);
+    dtr.innerHTML=`<td colspan="12" style="padding:0"><table class="dinn">${matRows}
+      <tr class="srow">
+        <td colspan="2">Portion ${fmtNum(r.portion)} Units · Ausbeute ${(r.eff*100).toFixed(2).replace(".",",")} %</td>
+        <td colspan="2"></td>
+        <td><span class="dimv">Brutto: ${fmtISK(bruttoSell)}</span> → <span class="pos">Netto (−${((brk+tx)*100).toFixed(2)} %): ${fmtISK(r.matRevSell)}</span></td>
+        <td class="dimv">Soforterlös: ${fmtISK(r.matRevBuy)}</td>
+      </tr>
+      <tr class="srow">
+        <td colspan="4">Kosten Sofort: <b>${fmtISK(r.costInstant)}</b> · Kosten Kauforder (+${(brk*100).toFixed(2)} %): <b>${fmtISK(r.costOrder)}</b></td>
+        <td><b class="${pcls(r.profitA)}">Gew. A: ${fmtISK(r.profitA)} (${fmtPct(r.profitA_pct)})</b><br><b class="${pcls(r.profitB)}">Gew. B: ${fmtISK(r.profitB)} (${fmtPct(r.profitB_pct)})</b></td>
+        <td></td>
+      </tr>
+    </table></td>`;
+
+    let open=false;
+    tr.addEventListener("click",()=>{open=!open;dtr.style.display=open?"table-row":"none";tr.querySelector(".tog").textContent=open?"▾":"▸";});
+    tbody.appendChild(tr);tbody.appendChild(dtr);
+  }
+  document.querySelectorAll("th[data-col]").forEach(th=>th.classList.toggle("act",th.dataset.col===sortCol));
+}
+
+/* ===== Init ===== */
+(function(){
+  const sel=$("hubSel");
+  ALL_HUBS.forEach(h=>{const o=document.createElement("option");o.value=h.key;o.textContent=h.label;sel.appendChild(o);});
+  sel.addEventListener("change",()=>{HOME=HUBKEY[sel.value];});
+
+  ["stBase","skR","skE","skS"].forEach(id=>{$(id).addEventListener("change",updateYield);});
+  updateYield();
+
+  document.querySelectorAll("th[data-col]").forEach(th=>{
+    th.addEventListener("click",()=>{
+      if(sortCol===th.dataset.col)sortDir*=-1;else{sortCol=th.dataset.col;sortDir=-1;}
+      if(scanResults.length)renderTable();
+    });
+  });
+
+  let searchTimer=null;
+  $("catSearch").addEventListener("input",()=>{
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(()=>renderCatTree($("catSearch").value),250);
+  });
+  $("btnAllOn").addEventListener("click",()=>setAllGroups(true,$("catSearch").value));
+  $("btnAllOff").addEventListener("click",()=>setAllGroups(false,$("catSearch").value));
+  $("scanBtn").addEventListener("click",runScan);
+
+  $("cbUrl").textContent=location.origin+location.pathname;
+
+  /* Katalog aus Cache laden falls vorhanden */
+  const cached=loadCache();
+  if(cached)initGroups(cached,true);
+
+  /* SSO-Popup-Rückgabe */
+  const q=new URLSearchParams(location.search);
+  if(window.opener&&q.get("code")&&q.get("state")){
+    try{window.opener.postMessage({eveSsoCode:q.get("code"),state:q.get("state")},location.origin);}catch(e){}
+    document.body.innerHTML='<div style="font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;color:#c3d4de">Login übermittelt — Fenster kann geschlossen werden.</div>';
+    setTimeout(()=>{try{window.close();}catch(e){}},900);
+  }
+})();
+</script>
+</body>
+</html>
