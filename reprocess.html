@@ -90,6 +90,11 @@ tr.mrow:hover td{background:var(--panel2);cursor:pointer}
 th[data-tip]:hover::after{right:auto;left:0}
 .ssorow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ssowarn{color:var(--red);font-size:9px;margin-top:3px}
+.chkrow{display:flex;align-items:center;padding:5px 8px;border-bottom:1px solid #0d1620;gap:8px}
+.chkrow:last-child{border-bottom:none}
+.chkrow input[type=checkbox]{flex-shrink:0;width:auto}
+.chkrow .gname{font-size:11px;color:var(--txt);font-family:'Chakra Petch',sans-serif;font-weight:600;min-width:120px}
+.chkrow .gcount{font-size:9px;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -171,35 +176,27 @@ th[data-tip]:hover::after{right:auto;left:0}
   </div>
 </div><!-- /ctrl -->
 
-<!-- ④ Katalog -->
+<!-- ④ Kategorien -->
 <div class="catpanel">
   <div class="t">
-    <span>④ Katalog — Marktgruppen auswählen</span>
+    <span>④ Kategorien auswählen</span>
     <span style="display:flex;gap:6px;align-items:center">
-      <span id="cacheInfo" class="hint" style="margin:0"></span>
-      <button id="loadBtn" class="btn sm" onclick="loadCatalog(true)">↻ Katalog neu laden</button>
+      <button class="btn sm" onclick="setAllCats(true)">Alle an</button>
+      <button class="btn sm" onclick="setAllCats(false)">Alle aus</button>
+      <span class="cat-count" id="selCount">–</span>
     </span>
   </div>
-  <div id="catLoading" class="hint">Lade Marktgruppen…</div>
-  <div id="catControls" style="display:none">
-    <div class="cat-toolbar">
-      <input type="text" id="catSearch" placeholder="Gruppen filtern…" style="width:220px">
-      <button class="btn sm" id="btnAllOn">Alle an</button>
-      <button class="btn sm" id="btnAllOff">Alle aus</button>
-      <span class="cat-count" id="selCount">0 Items ausgewählt</span>
-    </div>
-    <div id="catTree"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
-      <button id="scanBtn" class="btn" style="flex:1;min-width:160px;margin-top:0">► Scannen</button>
-      <div class="g2" style="flex:1;min-width:240px;gap:4px">
-        <div class="fld">
-          <label data-tip="Items mit Gewinn-A unter diesem Wert ausblenden.">Min Gewinn A %</label>
-          <input id="minProfit" type="number" step="1" value="-9999">
-        </div>
-        <div class="fld">
-          <label data-tip="Items mit weniger als diesem Tagesvolumen ausblenden. 0 = kein Filter.">Min Vol/Tag</label>
-          <input id="minVol" type="number" step="1" value="0">
-        </div>
+  <div id="catTree"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+    <button id="scanBtn" class="btn" style="flex:1;min-width:160px;margin-top:0">► Scannen</button>
+    <div class="g2" style="flex:1;min-width:240px;gap:4px">
+      <div class="fld">
+        <label data-tip="Items mit Gewinn-A unter diesem Wert ausblenden.">Min Gewinn A %</label>
+        <input id="minProfit" type="number" step="1" value="-9999">
+      </div>
+      <div class="fld">
+        <label data-tip="Items mit weniger als diesem Tagesvolumen ausblenden. 0 = kein Filter.">Min Vol/Tag</label>
+        <input id="minVol" type="number" step="1" value="0">
       </div>
     </div>
   </div>
@@ -257,17 +254,22 @@ const SSO_CLIENT_ID="16941b4d4c12498eb291fd78667dc896";
 const SSO_SCOPES="esi-skills.read_skills.v1";
 const SKILL_ACCOUNTING=16622,SKILL_BROKER=3446,SKILL_REPROC=3385,SKILL_EFF=3389,SKILL_SCRP=12196;
 const $=id=>document.getElementById(id);
-const CACHE_KEY="eve_reproc_mktgroups_v1",CACHE_TTL=864e5; /* 24 h */
+/* ===== Reprocessable Kategorien (EVE Universe Category IDs) ===== */
+const REPROC_CATS=[
+  {key:"ships",  catId:6,  name:"Schiffe",    hint:"Fregatten · Kreuzer · Schlachtschiffe · Capitals"},
+  {key:"mods",   catId:7,  name:"Module",     hint:"Rüstung · Schilde · Elektronik · Navigation · Waffen"},
+  {key:"ammo",   catId:8,  name:"Munition",   hint:"Projectile · Hybrid · Raketen · Energie-Kristalle"},
+  {key:"drones", catId:18, name:"Drohnen",    hint:"Kampf · Logistik · Mining-Drohnen"},
+  {key:"deploy", catId:22, name:"Deployables",hint:"Mobile Strukturen · Cynos · Warp Bubbles"},
+  {key:"ore",    catId:25, name:"Erze & Eis", hint:"Asteroiden-Erze · Eis · Compressed"},
+];
+const selectedCats=new Set(["mods"]);
 
 /* ===== Zustand ===== */
 let HOME=HUBKEY["JITA"];
 let sso={access:null,refresh:null,charId:null,name:null,timer:null};
 let ssoPending=null;
 let esiBlockUntil=0;
-let mktGroups=new Map();   /* id → {id,name,parentId,types[],children[]} */
-let mktRoots=[];
-let checkedGroups=new Set();
-let cbMap=new Map();       /* groupId → checkbox element */
 let scanResults=[];
 let sortCol="profitA",sortDir=-1;
 
@@ -460,60 +462,48 @@ async function loadSkills(){
   updateYield();
 }
 
-/* ===== Katalog / LocalStorage ===== */
-function loadCache(){
-  try{const s=localStorage.getItem(CACHE_KEY);if(!s)return null;const c=JSON.parse(s);if(Date.now()-c.ts>CACHE_TTL){localStorage.removeItem(CACHE_KEY);return null;}return c.data;}
-  catch(e){return null;}
-}
-function saveCache(data){
-  try{localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}
-}
-
-async function loadCatalog(force=false){
-  if(!force){const cached=loadCache();if(cached){initGroups(cached,true);return;}}
-  $("loadBtn").disabled=true;
-  $("catLoading").style.display="block";
-  $("catControls").style.display="none";
-  $("catLoading").textContent="Lade Gruppen-IDs von ESI…";
-
-  const idsRes=await getJSON(ESI+"/markets/groups/?datasource="+DS);
-  if(!idsRes.data){$("catLoading").textContent="ESI-Fehler. Bitte Seite neu laden.";$("loadBtn").disabled=false;return;}
-  const ids=idsRes.data;
-  const raw=[];let done=0;
-  $("catLoading").textContent=`Lade ${ids.length} Marktgruppen…`;
-  await pool(ids,async id=>{
-    const res=await getJSON(ESI+"/markets/groups/"+id+"/?datasource="+DS);
-    if(res.data)raw.push({id,name:res.data.name||"#"+id,parentId:res.data.parent_group_id??null,types:res.data.types||[]});
-    done++;
-    if(done%30===0)$("catLoading").textContent=`Lade Katalog: ${done}/${ids.length}…`;
-  },30);
-
-  saveCache(raw);
-  initGroups(raw,false);
-  $("loadBtn").disabled=false;
-}
-
-function initGroups(raw,fromCache){
-  mktGroups=new Map();
-  for(const g of raw)mktGroups.set(g.id,{...g,children:[]});
-  mktRoots=[];
-  for(const g of mktGroups.values()){
-    if(g.parentId&&mktGroups.has(g.parentId))mktGroups.get(g.parentId).children.push(g);
-    else mktRoots.push(g);
+/* ===== Kategorie-Auswahl ===== */
+function renderCatGrid(){
+  const el=$("catTree");el.innerHTML="";
+  for(const cat of REPROC_CATS){
+    const row=document.createElement("div");row.className="chkrow";
+    const cb=document.createElement("input");cb.type="checkbox";cb.dataset.cat=cat.key;cb.checked=selectedCats.has(cat.key);
+    cb.addEventListener("change",e=>{if(e.target.checked)selectedCats.add(cat.key);else selectedCats.delete(cat.key);updateSelCount();});
+    const nm=document.createElement("span");nm.className="gname";nm.textContent=cat.name;
+    const gc=document.createElement("span");gc.className="gcount";gc.textContent=cat.hint;
+    row.appendChild(cb);row.appendChild(nm);row.appendChild(gc);
+    el.appendChild(row);
   }
-  function srt(arr){arr.sort((a,b)=>a.name.localeCompare(b.name,"de"));arr.forEach(g=>srt(g.children));}
-  srt(mktRoots);
-
-  let totalTypes=0;for(const g of mktGroups.values())totalTypes+=g.types.length;
-  const ts=fromCache?(()=>{try{return new Date(JSON.parse(localStorage.getItem(CACHE_KEY)).ts).toLocaleString("de-DE");}catch(e){return"?";}}()):"gerade";
-  $("cacheInfo").textContent=fromCache?`Cache vom ${ts}`:"";
-  $("catLoading").style.display="none";
-  $("catControls").style.display="block";
-  renderCatTree("");
+  updateSelCount();
+}
+function setAllCats(on){
+  REPROC_CATS.forEach(c=>{if(on)selectedCats.add(c.key);else selectedCats.delete(c.key);});
+  document.querySelectorAll("#catTree input[type=checkbox]").forEach(cb=>{cb.checked=on;});
+  updateSelCount();
+}
+function updateSelCount(){
+  $("selCount").textContent=selectedCats.size+" Kategorie"+(selectedCats.size===1?"":"n")+" aktiv";
 }
 
-/* ===== Baum rendern ===== */
-function renderCatTree(filter){
+/* Typ-IDs für gewählte Kategorien per ESI laden (nur beim Scan) */
+async function getTypesForSelectedCats(onProgress){
+  const cats=REPROC_CATS.filter(c=>selectedCats.has(c.key));
+  const types=new Set();
+  for(const cat of cats){
+    const catRes=await getJSON(ESI+"/universe/categories/"+cat.catId+"/?datasource="+DS);
+    if(!catRes.data)continue;
+    const groupIds=catRes.data.groups||[];
+    await pool(groupIds,async gid=>{
+      const grpRes=await getJSON(ESI+"/universe/groups/"+gid+"/?datasource="+DS);
+      if(grpRes.data&&grpRes.data.types)grpRes.data.types.forEach(t=>types.add(t));
+      if(onProgress)onProgress();
+    },20);
+  }
+  return[...types];
+}
+
+/* ===== [entfernt: renderCatTree] ===== */
+if(false){function renderCatTree(filter){
   const fl=filter.toLowerCase().trim();
   cbMap.clear();
   const container=$("catTree");container.innerHTML="";
@@ -621,29 +611,24 @@ function updateSelCount(){
   $("selCount").textContent=n.toLocaleString("de-DE")+" Items ausgewählt";
 }
 
-function setAllGroups(checked,filter){
-  const fl=(filter||"").toLowerCase().trim();
-  function apply(g){
-    if(fl&&!g.name.toLowerCase().includes(fl)&&!g.children.some(c=>c.name.toLowerCase().includes(fl))){}
-    if(checked)checkedGroups.add(g.id);else checkedGroups.delete(g.id);
-    for(const c of g.children)apply(c);
-  }
-  for(const r of mktRoots)apply(r);
-  renderCatTree(filter||"");
 }
 
 /* ===== Scan ===== */
 async function runScan(){
-  const ids=getSelectedTypes();
-  if(!ids.length){alert("Keine Items ausgewählt.");return;}
+  if(!selectedCats.size){alert("Bitte mindestens eine Kategorie auswählen.");return;}
 
   const btn=$("scanBtn");btn.disabled=true;
   $("dataArea").style.display="block";
   $("tbody").innerHTML="";$("cards").innerHTML="";
   const setS=(msg,pct)=>{$("status").innerHTML=msg;$("bar").style.width=(pct||0)+"%";};
 
+  /* Typ-IDs per ESI-Universe holen */
+  setS("Lade Typen von ESI…",2);
+  const ids=await getTypesForSelectedCats(()=>setS(`Lade Typen von ESI… (${ids&&ids.length||"?"})`+"",-1));
+  if(!ids.length){setS("Keine Typen gefunden — falscher Kategorie-Filter?",0);btn.disabled=false;return;}
+
   /* Typinfo */
-  setS(`Lade Typinfo für ${ids.length} Items…`,5);
+  setS(`Lade Typinfo für ${ids.length} Items…`,8);
   const typeCache={};
   await pool(ids,async id=>{
     const res=await getJSON(ESI+"/universe/types/"+id+"/?datasource="+DS);
@@ -817,19 +802,9 @@ function renderTable(){
     });
   });
 
-  let searchTimer=null;
-  $("catSearch").addEventListener("input",()=>{
-    clearTimeout(searchTimer);
-    searchTimer=setTimeout(()=>renderCatTree($("catSearch").value),250);
-  });
-  $("btnAllOn").addEventListener("click",()=>setAllGroups(true,$("catSearch").value));
-  $("btnAllOff").addEventListener("click",()=>setAllGroups(false,$("catSearch").value));
   $("scanBtn").addEventListener("click",runScan);
-
   $("cbUrl").textContent=ssoCallbackUrl();
-
-  /* Katalog automatisch laden (Cache → sofort, sonst ESI-Fetch) */
-  loadCatalog();
+  renderCatGrid();
 
   /* SSO-Popup-Rückgabe */
   const q=new URLSearchParams(location.search);
