@@ -254,7 +254,7 @@ const ALL_HUBS=[
 ];
 const HUBKEY={};ALL_HUBS.forEach(h=>HUBKEY[h.key]=h);
 const SSO_CLIENT_ID="16941b4d4c12498eb291fd78667dc896";
-const SSO_SCOPES="esi-skills.read_skills.v1";
+const SSO_SCOPES="esi-skills.read_skills.v1 esi-wallet.read_character_wallet.v1";
 const SKILL_ACCOUNTING=16622,SKILL_BROKER=3446,SKILL_REPROC=3385,SKILL_EFF=3389,SKILL_SCRP=12196;
 const $=id=>document.getElementById(id);
 /* ===== Reprocessable Kategorien (EVE Universe Category IDs) ===== */
@@ -344,6 +344,17 @@ async function authJSON(url){
     return{failed:true};
   }
   return{failed:true};
+}
+async function authPaged(path,maxPages){
+  let out=[];
+  for(let page=1;page<=(maxPages||10);page++){
+    const res=await authJSON(ESI+path+(path.includes("?")?"&":"?")+"datasource="+DS+"&page="+page);
+    if(res.auth)return{auth:true};
+    if(!res.data)break;
+    out=out.concat(res.data);
+    if(res.data.length<1000)break;
+  }
+  return{data:out};
 }
 async function pool(items,fn,limit,onTick){
   let i=0,done=0;
@@ -451,7 +462,7 @@ function onToken(j){
   $("ssoOff").style.display="none";$("ssoOn").style.display="block";$("ssoWho").textContent="✓ "+sso.name;
   if(sso.timer)clearTimeout(sso.timer);
   sso.timer=setTimeout(refreshToken,Math.max(60,(j.expires_in||1200)-90)*1000);
-  loadSkills();
+  loadSkills().then(()=>loadFeesFromJournal());
 }
 async function refreshToken(){
   if(!sso.refresh)return;
@@ -474,8 +485,28 @@ async function loadSkills(){
   const tax=7.5*(1-0.11*acc),brk=Math.max(0,3-0.3*br);
   $("tax").value=tax.toFixed(2);$("broker").value=brk.toFixed(2);
   $("ssoSkills").textContent=`Reproc. ${rL} · Effizienz ${eL} · Scrapmetal ${sL}`;
-  $("feeHint").textContent=`Accounting ${acc} → Tax ${tax.toFixed(2)} % · Broker Rel. ${br} → ${brk.toFixed(2)} %`;
+  $("feeHint").textContent=`Schätzung aus Skills: Accounting ${acc} → Tax ${tax.toFixed(2)} % · Broker Rel. ${br} → ${brk.toFixed(2)} % — wird durch echte Trades ersetzt, falls vorhanden.`;
   updateYield();
+}
+/* Effektive Gebühren aus dem Wallet-Journal (~30 T): exakter als die Skill-Formel,
+   weil Standings/Citadel-Tarife real enthalten sind. Sales Tax = Tax / Verkaufswert,
+   Broker = Brokergebühr / (Kauf- + Verkaufswert, Order-Wert-Naeherung). */
+async function loadFeesFromJournal(){
+  if(!sso.access)return;
+  const tx=await authPaged("/characters/"+sso.charId+"/wallet/transactions/",1);
+  if(tx.auth||!tx.data||!tx.data.length)return; /* keine Trades -> Skill-Schätzung bleibt */
+  const jr=await authPaged("/characters/"+sso.charId+"/wallet/journal/",7);
+  const journal=jr.data||[];
+  let totBroker=0,totTax=0;
+  journal.forEach(j=>{const rt=j.ref_type||"";if(rt==="brokers_fee")totBroker+=Math.abs(j.amount||0);else if(rt==="transaction_tax")totTax+=Math.abs(j.amount||0);});
+  let sellVal=0,buyVal=0;
+  tx.data.forEach(t=>{const v=(t.quantity||0)*(t.unit_price||0);if(t.is_buy)buyVal+=v;else sellVal+=v;});
+  const effTax=sellVal>0?totTax/sellVal*100:null;
+  const effBrk=(buyVal+sellVal)>0?totBroker/(buyVal+sellVal)*100:null;
+  const parts=[];
+  if(effTax!=null){const v=effTax.toFixed(2);$("tax").value=v;parts.push("Tax "+v+" %");}
+  if(effBrk!=null){const v=effBrk.toFixed(2);$("broker").value=v;parts.push("Broker "+v+" %");}
+  if(parts.length)$("feeHint").textContent="Gebühren aus echten Trades (Journal, ~30 T): "+parts.join(" · ")+" — manuell anpassbar.";
 }
 
 /* ===== Kategorie-Auswahl ===== */

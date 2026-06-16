@@ -1093,7 +1093,7 @@ function onToken(j){
   if(sso.timer)clearTimeout(sso.timer);
   const ttl=Math.max(60,(j.expires_in||1200)-90);
   sso.timer=setTimeout(refreshToken,ttl*1000);
-  loadSkillFees();
+  loadSkillFees().then(()=>loadFeesFromJournal());
 }
 async function refreshToken(){
   if(!sso.refresh)return;
@@ -1132,8 +1132,28 @@ async function loadSkillFees(){
   const tax=7.5*(1-0.11*acc), brk=Math.max(0,3-0.3*br);
   $("tax").value=tax.toFixed(2);$("broker").value=brk.toFixed(2);
   HUBS().forEach(h=>{const te=$("tax_"+h.key),be=$("brk_"+h.key);if(te)te.value=tax.toFixed(2);if(be)be.value=brk.toFixed(2);});
-  $("ssoFees").textContent="Gebühren aus Skills: Accounting "+acc+" → Tax "+tax.toFixed(2)+" % · Broker Rel. "+br+" → "+brk.toFixed(2)+" % (Standings senken weiter — ggf. manuell nachjustieren)";
+  $("ssoFees").textContent="Gebühren aus Skills (Schätzung): Accounting "+acc+" → Tax "+tax.toFixed(2)+" % · Broker Rel. "+br+" → "+brk.toFixed(2)+" % — wird durch echte Trades ersetzt, falls vorhanden.";
   if(rows.length)render();
+}
+/* Effektive Gebühren aus dem Wallet-Journal (~30 T): exakter als die Skill-Formel,
+   weil Standings/Citadel-Tarife real enthalten sind. Sales Tax = Tax / Verkaufswert,
+   Broker = Brokergebühr / (Kauf- + Verkaufswert, Order-Wert-Naeherung). */
+async function loadFeesFromJournal(){
+  if(!sso.access)return;
+  const tx=await authPaged("/characters/"+sso.charId+"/wallet/transactions/",1);
+  if(tx.auth||!tx.data||!tx.data.length)return; /* keine Trades -> Skill-Schätzung bleibt */
+  const jr=await authPaged("/characters/"+sso.charId+"/wallet/journal/",7);
+  const journal=jr.data||[];
+  let totBroker=0,totTax=0;
+  journal.forEach(j=>{const rt=j.ref_type||"";if(rt==="brokers_fee")totBroker+=Math.abs(j.amount||0);else if(rt==="transaction_tax")totTax+=Math.abs(j.amount||0);});
+  let sellVal=0,buyVal=0;
+  tx.data.forEach(t=>{const v=(t.quantity||0)*(t.unit_price||0);if(t.is_buy)buyVal+=v;else sellVal+=v;});
+  const effTax=sellVal>0?totTax/sellVal*100:null;
+  const effBrk=(buyVal+sellVal)>0?totBroker/(buyVal+sellVal)*100:null;
+  const parts=[];
+  if(effTax!=null){const v=effTax.toFixed(2);$("tax").value=v;HUBS().forEach(h=>{const te=$("tax_"+h.key);if(te)te.value=v;});parts.push("Tax "+v+" %");}
+  if(effBrk!=null){const v=effBrk.toFixed(2);$("broker").value=v;HUBS().forEach(h=>{const be=$("brk_"+h.key);if(be)be.value=v;});parts.push("Broker "+v+" %");}
+  if(parts.length){$("ssoFees").textContent="Gebühren aus echten Trades (Journal, ~30 T): "+parts.join(" · ")+" — überschreibt Skill-Schätzung, manuell anpassbar.";if(rows.length)render();}
 }
 async function checkOrders(){
   if(!sso.access)return;
