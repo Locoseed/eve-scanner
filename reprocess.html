@@ -147,12 +147,15 @@ th[data-tip]:hover::after{right:auto;left:0}
         <select id="skE"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
       </div>
       <div class="fld">
-        <label data-tip="Item-spezifischer Skill, z.B. Scrapmetal Processing (12196) für Module/Ammo. +2 % pro Stufe.">Item-Skill</label>
+        <label data-tip="Scrapmetal Processing (12196) für Items (Module/Ammo/Schiffe/Drohnen): +2 %/Stufe. Bei Erz/Eis stattdessen der erz-spezifische Verarbeitungs-Skill.">Item/Erz-Skill</label>
         <select id="skS"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
       </div>
     </div>
-    <div class="yield-big" id="yieldDisplay">69,58 %</div>
-    <div class="yield-sub" id="yieldSub">50 % × 1,15 × 1,10 × 1,10</div>
+    <label style="margin-top:5px" data-tip="Stations-Reprocessing-Tax: wird von der Ausbeute abgezogen. NPC-Station = 5 % bei 0 Standing, 0 % ab ~6,67. Nach Login exakt aus deinen Standings berechnet.">Reproc-Tax %</label>
+    <input id="reprocTax" type="number" step="0.01" value="5.00">
+    <div class="hint" id="reprocTaxHint"></div>
+    <div class="yield-big" id="yieldDisplay">55,00 %</div>
+    <div class="yield-sub" id="yieldSub"></div>
   </div>
 
   <!-- ③ SSO -->
@@ -175,6 +178,8 @@ th[data-tip]:hover::after{right:auto;left:0}
         <button class="btn sm" onclick="ssoLogout()">Logout</button>
       </div>
       <div id="ssoSkills" class="hint" style="margin-top:5px"></div>
+      <button class="btn teal" style="margin-top:6px;width:100%" onclick="scanInventory()" data-tip="Liest deinen echten Bestand am Heim-Hub und vergleicht je Posten: zerlegen vs. direkt verkaufen — mit echten Stückzahlen.">📦 Bestand prüfen — Zerlegen vs. Verkaufen</button>
+      <div id="invHint" class="hint" style="margin-top:4px"></div>
     </div>
   </div>
 </div><!-- /ctrl -->
@@ -192,14 +197,18 @@ th[data-tip]:hover::after{right:auto;left:0}
   <div id="catTree"></div>
   <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
     <button id="scanBtn" class="btn" style="flex:1;min-width:160px;margin-top:0">► Scannen</button>
-    <div class="g2" style="flex:1;min-width:240px;gap:4px">
+    <div class="g3" style="flex:1;min-width:300px;gap:4px">
       <div class="fld">
-        <label data-tip="Items mit Gewinn-A unter diesem Wert ausblenden.">Min Gewinn A %</label>
+        <label data-tip="Items mit realisierbarem Gewinn (an Buy-Orders abverkauft) unter diesem Wert ausblenden.">Min Gewinn real %</label>
         <input id="minProfit" type="number" step="1" value="-9999">
       </div>
       <div class="fld">
         <label data-tip="Items mit weniger als diesem Tagesvolumen ausblenden. 0 = kein Filter.">Min Vol/Tag</label>
         <input id="minVol" type="number" step="1" value="0">
+      </div>
+      <div class="fld">
+        <label data-tip="Anteil des Tagesvolumens, den du realistisch zum Reprocessen aufkaufst. Begrenzt die ISK/Tag-Schätzung (statt 100 %).">Capture %</label>
+        <input id="capture" type="number" step="1" value="10">
       </div>
     </div>
   </div>
@@ -219,24 +228,54 @@ th[data-tip]:hover::after{right:auto;left:0}
     <thead><tr>
       <th data-col="name">Item</th>
       <th data-col="portionSize" data-tip="Mindestmenge pro Reprocessing-Batch.">Portion</th>
-      <th data-col="itemSell" data-tip="Günstigste Verkaufsorder (Sofortkauf).">Item Sofort</th>
-      <th data-col="itemBuy" data-tip="Bestes Gebot — Referenz für deine Kauforder.">Item Gebot</th>
-      <th data-col="matRevSell" data-tip="Nettoerlös der Mineralien via Sell-Order (abzgl. Broker + Tax).">Mat. Sell-Order</th>
-      <th data-col="matRevBuy" data-tip="Soforterlös bei Verkauf an Kauforders — keine Gebühren.">Mat. Sofort-Sell</th>
-      <th data-col="profitA" data-tip="Szenario A: Sofortkauf Item → Sell-Order Mineralien.">Gew. A</th>
-      <th data-col="profitA_pct" data-tip="Gewinn A als % des eingesetzten Kapitals.">A %</th>
-      <th data-col="profitB" data-tip="Szenario B: Kauforder Item (inkl. Broker) → Sell-Order Mineralien.">Gew. B</th>
-      <th data-col="profitB_pct" data-tip="Gewinn B als % des eingesetzten Kapitals.">B %</th>
-      <th data-col="vol" data-tip="Ø Tagesvolumen der letzten 5 Tage.">Vol/Tag</th>
-      <th data-col="iskPerDay" data-tip="Gew. A × Volumen/Portion — grobe Tagesschätzung.">ISK/Tag (A)</th>
+      <th data-col="itemSell" data-tip="Günstigste Verkaufsorder (= dein Sofortkaufpreis).">Item Sofort</th>
+      <th data-col="matRevBuy" data-tip="Realisierbarer Mineralerlös: tiefenbewusst an die Buy-Orders abverkauft, abzgl. Sales Tax. Das ist die Geld-jetzt-Zahl.">Mat. realisierbar</th>
+      <th data-col="matRevSell" data-tip="Optimistischer Mineralerlös: alles zum Sell-Order-Top, abzgl. Broker + Tax (du wartest auf Käufer).">Mat. optimal</th>
+      <th data-col="profitNow" data-tip="REALISIERBAR: Item sofort kaufen → Mineralien sofort an Buy-Orders. Konservativ, sofort einlösbar.">Gew. real</th>
+      <th data-col="profitNow_pct" data-tip="Realisierbarer Gewinn als % des Einkaufs.">real %</th>
+      <th data-col="profitA" data-tip="Optimistisch: Sofortkauf Item → Sell-Order Mineralien (Obergrenze).">Gew. A</th>
+      <th data-col="profitB" data-tip="Geduldig: Kauforder Item (inkl. Broker) → Sell-Order Mineralien.">Gew. B</th>
+      <th data-col="vol" data-tip="Ø Tagesvolumen der letzten 5 Tage (regionsweit).">Vol/Tag</th>
+      <th data-col="iskPerDay" data-tip="Gew. real × Volumen/Portion × Capture — Tagesschätzung.">ISK/Tag</th>
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table>
   </div>
   <div class="hint" style="margin-top:8px">
-    <b>Szenario A</b>: Sofortkauf des Items (kein Broker) → Sell-Order für Mineralien (−Broker−Tax). &nbsp;
-    <b>Szenario B</b>: eigene Kauforder (du zahlst Broker auf Einkauf) → Sell-Order Mineralien. &nbsp;
-    Stations-Reprocessing-Tax (Standings-abhängig) ist nicht eingerechnet — bei NPC-Stationen mit ≥ 6,67 Standings entfällt sie.
+    <b>Gew. real</b> (Headline): Item sofort kaufen → Mineralien sofort an Buy-Orders verkaufen (tiefenbewusst, −Sales Tax). Sofort einlösbar — danach ranken. &nbsp;
+    <b>Gew. A</b>: optimistische Obergrenze (Mineralien per Sell-Order, du wartest auf Käufer, −Broker−Tax). &nbsp;
+    <b>Gew. B</b>: eigene Kauforder fürs Item (+Broker) → Sell-Order Mineralien. &nbsp;
+    <span style="color:var(--red)">⚠</span> = Buy-Order-Tiefe reicht nicht für die anfallende Mineralmenge (Markt zu dünn). Reproc-Tax ist in der Ausbeute bereits abgezogen.
+  </div>
+</div>
+
+<!-- Bestand: Zerlegen vs. Verkaufen -->
+<div class="data" id="invArea" style="display:none">
+  <div class="status" id="invStatus"></div>
+  <div class="bar"><i id="invBar"></i></div>
+  <div class="recs" id="invCards"></div>
+  <div class="secT">
+    Bestand — Zerlegen vs. Verkaufen <span style="font-size:9px;font-weight:400;color:var(--dim)">echte Stückzahlen am Heim-Hub · ▸ Zeile für Materialdetails</span>
+    <button class="btn sm" style="margin-left:auto" onclick="copyReprocList()" data-tip="Kopiert die zum Zerlegen empfohlenen Posten als ‚Name xMenge' (Multibuy/Reprocess-Liste).">⧉ Reprocess-Liste</button>
+  </div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr>
+      <th data-icol="name">Item</th>
+      <th data-icol="qty" data-tip="Stück in deinem Bestand am Heim-Hub.">Bestand</th>
+      <th data-icol="portion" data-tip="Mindestmenge pro Reprocessing-Batch.">Portion</th>
+      <th data-icol="batches" data-tip="Volle Batches = floor(Bestand / Portion). Rest bleibt unzerlegt.">Batches</th>
+      <th data-icol="sellNet" data-tip="Direktverkauf des gesamten Bestands an die Buy-Orders (tiefenbewusst, −Sales Tax).">Verkauf real</th>
+      <th data-icol="reprocNet" data-tip="Zerlegen der vollen Batches → Mineralien an Buy-Orders (tiefenbewusst, −Sales Tax). Reproc-Tax in Ausbeute.">Zerlegen real</th>
+      <th data-icol="delta" data-tip="Vorteil = Zerlegen − Verkauf. Positiv → zerlegen lohnt.">Δ Vorteil</th>
+      <th data-icol="deltaPct" data-tip="Vorteil als % des Verkaufswerts.">Δ %</th>
+      <th data-icol="verdict">Empfehlung</th>
+    </tr></thead>
+    <tbody id="invBody"></tbody>
+  </table>
+  </div>
+  <div class="hint" style="margin-top:8px">
+    Beide Werte sind <b>realisierbar</b> (sofort an Buy-Orders, −Sales Tax) — direkt vergleichbar. Nur volle Batches werden gezählt; ein Rest unter einer Portion bleibt im Vergleich beim Direktverkauf. <span style="color:var(--red)">⚠</span> = Mineral-Buy-Markt zu dünn für die Menge.
   </div>
 </div>
 
@@ -254,7 +293,7 @@ const ALL_HUBS=[
 ];
 const HUBKEY={};ALL_HUBS.forEach(h=>HUBKEY[h.key]=h);
 const SSO_CLIENT_ID="16941b4d4c12498eb291fd78667dc896";
-const SSO_SCOPES="esi-skills.read_skills.v1 esi-wallet.read_character_wallet.v1";
+const SSO_SCOPES="esi-skills.read_skills.v1 esi-wallet.read_character_wallet.v1 esi-characters.read_standings.v1";
 const SKILL_ACCOUNTING=16622,SKILL_BROKER=3446,SKILL_REPROC=3385,SKILL_EFF=3389,SKILL_SCRP=12196;
 const $=id=>document.getElementById(id);
 /* ===== Reprocessable Kategorien (EVE Universe Category IDs) ===== */
@@ -274,7 +313,7 @@ let sso={access:null,refresh:null,charId:null,name:null,timer:null};
 let ssoPending=null;
 let esiBlockUntil=0;
 let scanResults=[];
-let sortCol="profitA",sortDir=-1;
+let sortCol="profitNow",sortDir=-1;
 
 /* ===== Utils ===== */
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -292,18 +331,25 @@ function fmtPct(n){if(n==null||isNaN(n))return"–";return(n>=0?"+":"")+n.toFixe
 function fmtNum(n){if(n==null||isNaN(n))return"–";return Math.round(n).toLocaleString("de-DE");}
 function pcls(v){return v==null?"dimv":v>0?"pos":"neg";}
 
-/* ===== Ausbeute ===== */
-function calcYield(){
+/* ===== Ausbeute =====
+   WICHTIG: In EVE wirken Reprocessing (3385) und Reprocessing Efficiency (3389) NUR auf
+   Erz/Eis. Items (Module/Ammo/Schiffe/Drohnen/Deployables) nutzen ausschließlich
+   Scrapmetal Processing (12196). Der frühere Code stapelte alle drei auf alles und
+   überschätzte den Item-Yield massiv (z.B. 69,58 % statt real 55 %). */
+function reprocTaxFactor(){const t=parseFloat($("reprocTax").value);return 1-(isNaN(t)?0:t)/100;}
+function yieldFor(isOre){
   const b=parseFloat($("stBase").value)||0.5;
   const r=+$("skR").value,e=+$("skE").value,s=+$("skS").value;
-  return b*(1+0.03*r)*(1+0.02*e)*(1+0.02*s);
+  const base=isOre ? b*(1+0.03*r)*(1+0.02*e)*(1+0.02*s) : b*(1+0.02*s);
+  return base*reprocTaxFactor();
 }
 function updateYield(){
-  const b=parseFloat($("stBase").value)||0.5;
-  const r=+$("skR").value,e=+$("skE").value,s=+$("skS").value;
-  const y=b*(1+0.03*r)*(1+0.02*e)*(1+0.02*s);
-  $("yieldDisplay").textContent=(y*100).toFixed(2).replace(".",",")+" %";
-  $("yieldSub").textContent=`${(b*100).toFixed(0)} % × ${(1+0.03*r).toFixed(2)} × ${(1+0.02*e).toFixed(2)} × ${(1+0.02*s).toFixed(2)}`;
+  const yi=yieldFor(false), yo=yieldFor(true);
+  const t=parseFloat($("reprocTax").value)||0;
+  $("yieldDisplay").innerHTML=
+    `<span style="color:var(--teal)">${(yi*100).toFixed(2).replace(".",",")} %</span> <span class="dimv" style="font-size:10px">Items</span>`+
+    ` &nbsp;·&nbsp; <span style="color:var(--gold)">${(yo*100).toFixed(2).replace(".",",")} %</span> <span class="dimv" style="font-size:10px">Erz/Eis</span>`;
+  $("yieldSub").textContent=`Items = Basis × Scrapmetal · Erz = Basis × Reproc × Eff × Erz-Skill · inkl. −${t.toFixed(2)} % Reproc-Tax`;
 }
 
 /* ===== ESI Helfer ===== */
@@ -364,15 +410,23 @@ async function pool(items,fn,limit,onTick){
 async function book(region,station,typeId,side){
   const url=p=>ESI+"/markets/"+region+"/orders/?datasource="+DS+"&order_type="+side+"&type_id="+typeId+"&page="+p;
   const first=await getJSON(url(1));
-  if(first.failed||first.notFound)return{best:null};
-  const prices=[];
-  const push=arr=>{if(!arr)return;for(const o of arr){if(o.location_id===station)prices.push(o.price);}};
+  if(first.failed||first.notFound)return{best:null,orders:[]};
+  const orders=[];
+  const push=arr=>{if(!arr)return;for(const o of arr){if(o.location_id===station)orders.push({p:o.price,v:o.volume_remain||0});}};
   push(first.data);
   const pages=Math.min(first.pages||1,8);
   if(pages>1){const rest=await Promise.all(Array.from({length:pages-1},(_,k)=>getJSON(url(k+2))));for(const r of rest){if(r&&r.data)push(r.data);}}
-  if(!prices.length)return{best:null};
-  prices.sort((a,b)=>side==="sell"?a-b:b-a);
-  return{best:prices[0]};
+  if(!orders.length)return{best:null,orders:[]};
+  orders.sort((a,b)=>side==="sell"?a.p-b.p:b.p-a.p);
+  return{best:orders[0].p,orders};
+}
+/* Tiefenbewusste Bewertung: läuft das (best-first sortierte) Orderbuch ab, bis qty gefüllt
+   ist. Verkauf großer Mineralmengen "läuft das Buch runter" — der frühere Top-Preis × Menge
+   war für jede realistische Menge zu optimistisch. short=true: Buch reicht nicht für qty. */
+function fillValue(orders,qty){
+  let rem=qty,val=0,filled=0;
+  for(const o of orders){if(rem<=0)break;const take=Math.min(o.v,rem);val+=take*o.p;filled+=take;rem-=take;}
+  return{val,filled,avg:filled>0?val/filled:null,short:rem>1e-6};
 }
 async function getVol(region,typeId){
   const res=await getJSON(ESI+"/markets/"+region+"/history/?datasource="+DS+"&type_id="+typeId);
@@ -462,7 +516,25 @@ function onToken(j){
   $("ssoOff").style.display="none";$("ssoOn").style.display="block";$("ssoWho").textContent="✓ "+sso.name;
   if(sso.timer)clearTimeout(sso.timer);
   sso.timer=setTimeout(refreshToken,Math.max(60,(j.expires_in||1200)-90)*1000);
-  loadSkills().then(()=>loadFeesFromJournal());
+  loadSkills().then(()=>loadFeesFromJournal()).then(()=>resolveReprocTax());
+}
+/* Reprocessing-Tax exakt aus echten Standings statt Annahme:
+   NPC-Station-Tax = max(0, 5 % − 0,75 % × Standing zur Eigner-Corp), 0 % ab Standing 6,67.
+   (Social-Skills wie Diplomacy/Connections werden nicht aufgerechnet → leicht konservativ.) */
+async function resolveReprocTax(){
+  if(!sso.access)return;
+  const stRes=await getJSON(ESI+"/universe/stations/"+HOME.station+"/?datasource="+DS);
+  const owner=stRes.data&&stRes.data.owner;
+  if(!owner){$("reprocTaxHint").textContent="Stations-Eigner nicht ermittelbar — Reproc-Tax manuell prüfen.";return;}
+  const res=await authJSON(ESI+"/characters/"+sso.charId+"/standings/?datasource="+DS);
+  if(res.auth||!res.data){$("reprocTaxHint").textContent="Standings nicht ladbar (Scope esi-characters.read_standings.v1 nötig) — Reproc-Tax manuell.";return;}
+  const e=res.data.find(x=>x.from_id===owner);
+  const standing=e?e.standing:0;
+  const tax=Math.max(0,5-0.75*standing);
+  $("reprocTax").value=tax.toFixed(2);
+  $("reprocTaxHint").textContent=`Aus Standing ${standing.toFixed(2)} zur Eigner-Corp von ${HOME.label}: Reproc-Tax ${tax.toFixed(2)} %.`;
+  updateYield();
+  if(scanResults.length)renderTable();
 }
 async function refreshToken(){
   if(!sso.refresh)return;
@@ -535,18 +607,19 @@ function updateSelCount(){
 /* Typ-IDs für gewählte Kategorien per ESI laden (nur beim Scan) */
 async function getTypesForSelectedCats(onProgress){
   const cats=REPROC_CATS.filter(c=>selectedCats.has(c.key));
-  const types=new Set();
+  const types=new Map(); /* typeID -> isOre (catId 25 = Erz/Eis) */
   for(const cat of cats){
+    const isOre=(cat.catId===25);
     const catRes=await getJSON(ESI+"/universe/categories/"+cat.catId+"/?datasource="+DS);
     if(!catRes.data)continue;
     const groupIds=catRes.data.groups||[];
     await pool(groupIds,async gid=>{
       const grpRes=await getJSON(ESI+"/universe/groups/"+gid+"/?datasource="+DS);
-      if(grpRes.data&&grpRes.data.types)grpRes.data.types.forEach(t=>types.add(t));
+      if(grpRes.data&&grpRes.data.types)grpRes.data.types.forEach(t=>{if(!types.has(t))types.set(t,isOre);});
       if(onProgress)onProgress(types.size);
     },20);
   }
-  return[...types];
+  return types;
 }
 
 /* ===== [entfernt: renderCatTree] ===== */
@@ -669,9 +742,10 @@ async function runScan(){
   $("tbody").innerHTML="";$("cards").innerHTML="";
   const setS=(msg,pct)=>{$("status").innerHTML=msg;$("bar").style.width=(pct||0)+"%";};
 
-  /* Typ-IDs per ESI-Universe holen */
+  /* Typ-IDs per ESI-Universe holen (Map: id -> isOre, für korrekten Yield pro Kategorie) */
   setS("Lade Typen von ESI…",2);
-  const ids=await getTypesForSelectedCats(n=>setS(`Lade Typen von ESI… (${n})`,-1));
+  const typeMap=await getTypesForSelectedCats(n=>setS(`Lade Typen von ESI… (${n})`,-1));
+  const ids=[...typeMap.keys()];
   if(!ids.length){setS("Keine Typen gefunden — falscher Kategorie-Filter?",0);btn.disabled=false;return;}
 
   const region=HOME.region,station=HOME.station;
@@ -725,7 +799,7 @@ async function runScan(){
     const batch=priceTargets.slice(bi,bi+BATCH);
     await pool(batch,async t=>{
       const[s,b]=await Promise.all([book(region,station,t.id,"sell"),book(region,station,t.id,"buy")]);
-      t.store[t.id]={sell:s.best,buy:b.best};done++;
+      t.store[t.id]={sell:s.best,buy:b.best,sellOrders:s.orders,buyOrders:b.orders};done++;
       if(done%8===0)setS(`Marktpreise: ${done}/${total}…`,34+Math.round(done/total*48));
     },8);
     if(bi+BATCH<priceTargets.length){
@@ -739,7 +813,7 @@ async function runScan(){
   setS("Berechne…",97);
   const brk=parseFloat($("broker").value)/100||0;
   const tx=parseFloat($("tax").value)/100||0;
-  const eff=calcYield();
+  const capture=(parseFloat($("capture").value)||10)/100;
   const minPct=parseFloat($("minProfit").value)||-9999;
 
   scanResults=[];
@@ -749,41 +823,57 @@ async function runScan(){
     const portion=ti.portion_size||1;
     const ip=iPrice[id]||{};
     if(ip.sell==null&&ip.buy==null)continue;
+    const isOre=typeMap.get(id)===true;
+    const eff=yieldFor(isOre);
 
-    let matRevSell=0,matRevBuy=0;
+    let matRevSellTop=0;   /* optimistisch: alle Mineralien zum Sell-Order-Top */
+    let matRevBuyReal=0;   /* realistisch: tiefenbewusst an die Buy-Orders abverkauft */
+    let thinMarket=false;  /* Buy-Tiefe reicht nicht für die anfallende Menge */
     const details=[];
     for(const{mid,qty:baseQty}of mats){
       const matName=matNameCache[mid]||("#"+mid);
       const received=Math.floor(baseQty*eff);if(received<=0)continue;
       const mp=mPrice[mid]||{};
-      const vSell=mp.sell!=null?received*mp.sell:null;
-      const vBuy=mp.buy!=null?received*mp.buy:null;
-      if(vSell!=null)matRevSell+=vSell;
-      if(vBuy!=null)matRevBuy+=vBuy;
-      details.push({id:mid,name:matName,baseQty,received,sellP:mp.sell,buyP:mp.buy,vSell,vBuy});
+      const vSellTop=mp.sell!=null?received*mp.sell:null;
+      let vBuyReal=null;
+      if(mp.buyOrders&&mp.buyOrders.length){const f=fillValue(mp.buyOrders,received);vBuyReal=f.val;if(f.short)thinMarket=true;}
+      if(vSellTop!=null)matRevSellTop+=vSellTop;
+      if(vBuyReal!=null)matRevBuyReal+=vBuyReal;
+      details.push({id:mid,name:matName,baseQty,received,sellP:mp.sell,buyP:mp.buy,vSell:vSellTop,vBuy:vBuyReal});
     }
-    const matRevSellNet=matRevSell*(1-brk-tx);
-    const costInstant=ip.sell!=null?portion*ip.sell:null;
+    /* Sell-Order → Broker + Tax · Verkauf an Buy-Order → nur Sales Tax (kein Broker) */
+    const matRevSellNet=matRevSellTop*(1-brk-tx);
+    const matRevBuyNet=matRevBuyReal*(1-tx);
+    /* Item-Sofortkauf tiefenbewusst über das Sell-Orderbuch (für 'portion' Units) */
+    let costInstant=null;
+    if(ip.sellOrders&&ip.sellOrders.length){const f=fillValue(ip.sellOrders,portion);costInstant=f.short?null:f.val;}
+    else if(ip.sell!=null)costInstant=portion*ip.sell;
     const costOrder=ip.buy!=null?portion*ip.buy*(1+brk):null;
+
+    /* realisierbar (Headline): Item sofort kaufen → Mineralien sofort an Buy-Orders, −Tax */
+    const profitNow=costInstant!=null?matRevBuyNet-costInstant:null;
+    /* optimistisch: Item sofort kaufen → Mineralien per Sell-Order (du wartest, wirst Top-Seller) */
     const profitA=costInstant!=null?matRevSellNet-costInstant:null;
+    /* geduldig: Item per Kauforder → Mineralien per Sell-Order */
     const profitB=costOrder!=null?matRevSellNet-costOrder:null;
+    const profitNow_pct=profitNow!=null&&costInstant>0?profitNow/costInstant*100:null;
     const profitA_pct=profitA!=null&&costInstant>0?profitA/costInstant*100:null;
     const profitB_pct=profitB!=null&&costOrder>0?profitB/costOrder*100:null;
     const vol=volCache[id]??null;
-    const iskPerDay=profitA!=null&&vol!=null?profitA*(vol/portion):null;
+    const iskPerDay=profitNow!=null&&vol!=null?profitNow*(vol/portion)*capture:null;
 
-    if(profitA_pct!=null&&profitA_pct<minPct)continue;
+    if(profitNow_pct!=null&&profitNow_pct<minPct)continue;
     if(minVol>0&&(vol==null||vol<minVol))continue;
 
-    scanResults.push({id,name:ti.name,portion,itemSell:ip.sell,itemBuy:ip.buy,
-      matRevSell:matRevSellNet,matRevBuy,costInstant,costOrder,
-      profitA,profitA_pct,profitB,profitB_pct,vol,iskPerDay,details,eff});
+    scanResults.push({id,name:ti.name,portion,isOre,thinMarket,itemSell:ip.sell,itemBuy:ip.buy,
+      matRevSell:matRevSellNet,matRevBuy:matRevBuyNet,costInstant,costOrder,
+      profitNow,profitNow_pct,profitA,profitA_pct,profitB,profitB_pct,vol,iskPerDay,details,eff});
   }
 
   renderTable();
   btn.disabled=false;
-  const pos=scanResults.filter(r=>r.profitA>0).length;
-  setS(`<b>${scanResults.length}</b> Items · <b>${pos}</b> profitabel (Szen. A)`,100);
+  const pos=scanResults.filter(r=>r.profitNow>0).length;
+  setS(`<b>${scanResults.length}</b> Items · <b>${pos}</b> realisierbar profitabel`,100);
 }
 
 /* ===== Tabelle ===== */
@@ -795,32 +885,34 @@ function renderTable(){
     if(typeof va==="string")return sortDir*va.localeCompare(vb);
     return sortDir*(va-vb);
   });
-  const pos=sorted.filter(r=>r.profitA>0).length;
-  const posB=sorted.filter(r=>r.profitB>0).length;
+  const posNow=sorted.filter(r=>r.profitNow>0).length;
+  const posA=sorted.filter(r=>r.profitA>0).length;
   const bestDay=sorted.reduce((m,r)=>r.iskPerDay!=null&&r.iskPerDay>m?r.iskPerDay:m,0);
+  const yi=yieldFor(false),yo=yieldFor(true);
   $("cards").innerHTML=`
     <div class="card"><div class="v">Gescannt</div><div class="nm">${sorted.length}</div><div class="px">Items mit Reproc.-Daten</div></div>
-    <div class="card"><div class="v">Profitabel A</div><div class="nm" style="color:var(--green)">${pos}</div><div class="px">Sofortkauf → Sell-Order</div></div>
-    <div class="card"><div class="v">Profitabel B</div><div class="nm" style="color:var(--teal)">${posB}</div><div class="px">Kauforder → Sell-Order</div></div>
-    <div class="card"><div class="v">Best ISK/Tag A</div><div class="nm" style="color:var(--gold)">${fmtISK(bestDay,1)}</div><div class="px">Gew. A × Volumen</div></div>
-    <div class="card"><div class="v">Ausbeute</div><div class="nm" style="color:var(--amber)">${(calcYield()*100).toFixed(2).replace(".",",")} %</div><div class="px">effektiv</div></div>`;
+    <div class="card"><div class="v">Realisierbar +</div><div class="nm" style="color:var(--green)">${posNow}</div><div class="px">sofort an Buy-Orders profitabel</div></div>
+    <div class="card"><div class="v">Optimal + (A)</div><div class="nm" style="color:var(--teal)">${posA}</div><div class="px">nur mit Sell-Order &amp; Geduld</div></div>
+    <div class="card"><div class="v">Best ISK/Tag</div><div class="nm" style="color:var(--gold)">${fmtISK(bestDay,1)}</div><div class="px">Gew. real × Vol × Capture</div></div>
+    <div class="card"><div class="v">Ausbeute</div><div class="nm" style="color:var(--amber)">${(yi*100).toFixed(1).replace(".",",")}/${(yo*100).toFixed(1).replace(".",",")} %</div><div class="px">Items / Erz (inkl. Tax)</div></div>`;
 
   const brk=parseFloat($("broker").value)/100||0;
   const tx=parseFloat($("tax").value)/100||0;
   const tbody=$("tbody");tbody.innerHTML="";
   for(const r of sorted){
     const tr=document.createElement("tr");tr.className="mrow";
+    const warn=r.thinMarket?' <span style="color:var(--red)" title="Buy-Order-Tiefe reicht nicht für die anfallende Mineralmenge">⚠</span>':'';
+    const kind=r.isOre?'<span class="dimv" style="font-size:8px"> Erz</span>':'';
     tr.innerHTML=
-      `<td class="name"><span class="tog">▸</span>${esc(r.name)}</td>`+
+      `<td class="name"><span class="tog">▸</span>${esc(r.name)}${kind}${warn}</td>`+
       `<td class="dimv">${fmtNum(r.portion)}</td>`+
       `<td>${r.itemSell!=null?fmtISK(r.itemSell):"–"}</td>`+
-      `<td class="dimv">${r.itemBuy!=null?fmtISK(r.itemBuy):"–"}</td>`+
-      `<td>${fmtISK(r.matRevSell)}</td>`+
-      `<td class="dimv">${fmtISK(r.matRevBuy)}</td>`+
+      `<td>${fmtISK(r.matRevBuy)}</td>`+
+      `<td class="dimv">${fmtISK(r.matRevSell)}</td>`+
+      `<td class="${pcls(r.profitNow)}"><b>${fmtISK(r.profitNow)}</b></td>`+
+      `<td class="${pcls(r.profitNow_pct)}">${fmtPct(r.profitNow_pct)}</td>`+
       `<td class="${pcls(r.profitA)}">${fmtISK(r.profitA)}</td>`+
-      `<td class="${pcls(r.profitA_pct)}">${fmtPct(r.profitA_pct)}</td>`+
       `<td class="${pcls(r.profitB)}">${fmtISK(r.profitB)}</td>`+
-      `<td class="${pcls(r.profitB_pct)}">${fmtPct(r.profitB_pct)}</td>`+
       `<td class="dimv">${r.vol!=null?fmtNum(r.vol):"–"}</td>`+
       `<td class="${pcls(r.iskPerDay)}">${fmtISK(r.iskPerDay,1)}</td>`;
 
@@ -828,23 +920,21 @@ function renderTable(){
     const matRows=r.details.map(m=>`<tr>
       <td style="width:28%;color:var(--txt)">${esc(m.name)}</td>
       <td>SDE ${fmtNum(m.baseQty)} → <b style="color:var(--teal)">${fmtNum(m.received)}</b> erhalten</td>
-      <td>${m.sellP!=null?fmtISK(m.sellP)+" Sell":"–"}</td>
       <td>${m.buyP!=null?fmtISK(m.buyP)+" Buy":"–"}</td>
-      <td class="pos">${fmtISK(m.vSell)} <span class="dimv">(Sell-Order)</span></td>
-      <td class="dimv">${fmtISK(m.vBuy)} <span class="dimv">(Sofort)</span></td>
+      <td>${m.sellP!=null?fmtISK(m.sellP)+" Sell":"–"}</td>
+      <td class="pos">${fmtISK(m.vBuy)} <span class="dimv">(realisierbar)</span></td>
+      <td class="dimv">${fmtISK(m.vSell)} <span class="dimv">(optimal)</span></td>
     </tr>`).join("");
-    const bruttoSell=r.details.reduce((s,m)=>m.vSell!=null?s+m.vSell:s,0);
-    dtr.innerHTML=`<td colspan="12" style="padding:0"><table class="dinn">${matRows}
+    dtr.innerHTML=`<td colspan="11" style="padding:0"><table class="dinn">${matRows}
       <tr class="srow">
-        <td colspan="2">Portion ${fmtNum(r.portion)} Units · Ausbeute ${(r.eff*100).toFixed(2).replace(".",",")} %</td>
+        <td colspan="2">Portion ${fmtNum(r.portion)} Units · Ausbeute ${(r.eff*100).toFixed(2).replace(".",",")} %${r.isOre?" (Erz)":" (Item/Scrapmetal)"}</td>
         <td colspan="2"></td>
-        <td><span class="dimv">Brutto: ${fmtISK(bruttoSell)}</span> → <span class="pos">Netto (−${((brk+tx)*100).toFixed(2)} %): ${fmtISK(r.matRevSell)}</span></td>
-        <td class="dimv">Soforterlös: ${fmtISK(r.matRevBuy)}</td>
+        <td><span class="pos">Realisierbar (−${(tx*100).toFixed(2)} % Tax): ${fmtISK(r.matRevBuy)}</span></td>
+        <td class="dimv">Optimal (−${((brk+tx)*100).toFixed(2)} %): ${fmtISK(r.matRevSell)}</td>
       </tr>
       <tr class="srow">
-        <td colspan="4">Kosten Sofort: <b>${fmtISK(r.costInstant)}</b> · Kosten Kauforder (+${(brk*100).toFixed(2)} %): <b>${fmtISK(r.costOrder)}</b></td>
-        <td><b class="${pcls(r.profitA)}">Gew. A: ${fmtISK(r.profitA)} (${fmtPct(r.profitA_pct)})</b><br><b class="${pcls(r.profitB)}">Gew. B: ${fmtISK(r.profitB)} (${fmtPct(r.profitB_pct)})</b></td>
-        <td></td>
+        <td colspan="3">Kosten Sofort: <b>${fmtISK(r.costInstant)}</b> · Kosten Kauforder (+${(brk*100).toFixed(2)} %): <b>${fmtISK(r.costOrder)}</b></td>
+        <td colspan="3"><b class="${pcls(r.profitNow)}">Gew. real: ${fmtISK(r.profitNow)} (${fmtPct(r.profitNow_pct)})</b> · <span class="${pcls(r.profitA)}">A: ${fmtISK(r.profitA)}</span> · <span class="${pcls(r.profitB)}">B: ${fmtISK(r.profitB)}</span>${r.thinMarket?' · <span style="color:var(--red)">⚠ Buy-Markt zu dünn</span>':''}</td>
       </tr>
     </table></td>`;
 
@@ -855,19 +945,180 @@ function renderTable(){
   document.querySelectorAll("th[data-col]").forEach(th=>th.classList.toggle("act",th.dataset.col===sortCol));
 }
 
+/* ===== Bestand: Zerlegen vs. Verkaufen (echte Stückzahlen via esi-assets) ===== */
+let invResults=[],invSortCol="delta",invSortDir=-1;
+async function scanInventory(){
+  if(!sso.access){$("invHint").textContent="Erst einloggen.";return;}
+  const region=HOME.region,station=HOME.station;
+  $("invArea").style.display="block";
+  const setS=(m,p)=>{$("invStatus").innerHTML=m;$("invBar").style.width=(p||0)+"%";};
+  $("invBody").innerHTML="";$("invCards").innerHTML="";
+  setS("Lade Bestand…",4);
+
+  const as=await authPaged("/characters/"+sso.charId+"/assets/",30);
+  if(as.auth){setS("Token abgelaufen — neu einloggen.",0);return;}
+  if(!as.data||!as.data.length){setS("Keine Assets gefunden.",0);return;}
+  /* Stück je Typ am Heim-Hub aufsummieren (Hangar; Items in Containern/Schiffen bleiben außen vor) */
+  const qtyByType={};
+  for(const a of as.data){
+    if(a.location_id!==station)continue;
+    qtyByType[a.type_id]=(qtyByType[a.type_id]||0)+(a.quantity||0);
+  }
+  let typeIds=Object.keys(qtyByType).map(Number);
+  if(!typeIds.length){setS("Kein Bestand am Heim-Hub ("+HOME.label+"). Anderen Hub wählen und neu prüfen.",0);return;}
+
+  setS("Lade Reprocessing-Daten (Fuzzwork SDE)…",12);
+  const matMap=await loadMatMap();
+  if(!matMap){setS("Reproc-Daten nicht ladbar (Fuzzwork/CORS).",0);return;}
+  typeIds=typeIds.filter(id=>matMap.has(id)&&matMap.get(id).length);
+  if(!typeIds.length){setS("Nichts Reprocessbares im Bestand am Heim-Hub.",0);return;}
+
+  /* Typinfo (Name, Portion, group_id) */
+  setS(`Lade Typinfo für ${typeIds.length} Posten…`,20);
+  const typeCache={};
+  await pool(typeIds,async id=>{const r=await getJSON(ESI+"/universe/types/"+id+"/?datasource="+DS);if(r.data)typeCache[id]=r.data;},10);
+  /* Erz-Erkennung: group_id -> category_id (25 = Erz/Eis) */
+  const groupIds=[...new Set(typeIds.map(id=>typeCache[id]&&typeCache[id].group_id).filter(Boolean))];
+  const groupCat={};
+  await pool(groupIds,async gid=>{const r=await getJSON(ESI+"/universe/groups/"+gid+"/?datasource="+DS);if(r.data)groupCat[gid]=r.data.category_id;},10);
+  const isOreOf=id=>{const ti=typeCache[id];return ti?groupCat[ti.group_id]===25:false;};
+
+  /* Material-IDs + Namen */
+  const matIds=new Set();
+  for(const id of typeIds){for(const{mid}of matMap.get(id))matIds.add(mid);}
+  const matArr=[...matIds];
+  const matNameCache={};
+  setS(`Lade ${matArr.length} Materialnamen…`,30);
+  await pool(matArr,async mid=>{const r=await getJSON(ESI+"/universe/types/"+mid+"/?datasource="+DS);if(r.data)matNameCache[mid]=r.data.name;},10);
+
+  /* Preise: Item-Buy-Orders (Direktverkauf) + Material-Buy-Orders (Mineralerlös) */
+  const itemBuy={},matBuy={};
+  const priceTargets=[...typeIds.map(id=>({id,store:itemBuy})),...matArr.map(id=>({id,store:matBuy}))];
+  let done=0;const total=priceTargets.length;
+  await pool(priceTargets,async t=>{
+    const b=await book(region,station,t.id,"buy");
+    t.store[t.id]=b.orders;done++;
+    if(done%6===0)setS(`Marktpreise: ${done}/${total}…`,40+Math.round(done/total*50));
+  },8);
+
+  /* Berechnung */
+  setS("Berechne…",94);
+  const tx=parseFloat($("tax").value)/100||0;
+  invResults=[];
+  for(const id of typeIds){
+    const ti=typeCache[id];if(!ti)continue;
+    const qty=qtyByType[id];
+    const portion=ti.portion_size||1;
+    const batches=Math.floor(qty/portion);
+    const units=batches*portion;                 /* vergleichbare Menge (volle Batches) */
+    const eff=yieldFor(isOreOf(id));
+    /* Direktverkauf der vergleichbaren Menge an Buy-Orders */
+    const ib=itemBuy[id]||[];
+    const sf=fillValue(ib,units);
+    const sellNet=sf.val*(1-tx);
+    /* Zerlegen: Mineralien der vollen Batches an Buy-Orders */
+    let reprocGross=0,thin=sf.short;const details=[];
+    for(const{mid,qty:baseQty}of matMap.get(id)){
+      const recPortion=Math.floor(baseQty*eff);if(recPortion<=0)continue;
+      const recTotal=recPortion*batches;
+      const mb=matBuy[mid]||[];
+      const mf=fillValue(mb,recTotal);
+      if(mf.short)thin=true;
+      reprocGross+=mf.val;
+      details.push({name:matNameCache[mid]||("#"+mid),recTotal,val:mf.val,short:mf.short});
+    }
+    const reprocNet=reprocGross*(1-tx);
+    const usable=batches>0&&units>0;
+    const delta=usable?reprocNet-sellNet:null;
+    const deltaPct=usable&&sellNet>0?delta/sellNet*100:null;
+    let verdict,vcls;
+    if(!usable){verdict="zu wenig (Portion "+fmtNum(portion)+")";vcls="dimv";}
+    else if(delta>0){verdict="ZERLEGEN";vcls="pos";}
+    else{verdict="verkaufen";vcls="neg";}
+    invResults.push({id,name:ti.name,isOre:isOreOf(id),qty,portion,batches,units,
+      sellNet,reprocNet,delta,deltaPct,verdict,vcls,thin,details,usable});
+  }
+  renderInv();
+  const win=invResults.filter(r=>r.usable&&r.delta>0);
+  const gain=win.reduce((s,r)=>s+r.delta,0);
+  $("invHint").innerHTML=`${invResults.length} reprocessbare Posten · <span class="pos">${win.length} besser zerlegen (+${fmtISK(gain)})</span>`;
+  setS(`<b>${invResults.length}</b> Posten · <b>${win.length}</b> lohnen zum Zerlegen · Mehrertrag <b class="pos">${fmtISK(gain)}</b>`,100);
+}
+function renderInv(){
+  const sorted=[...invResults].sort((a,b)=>{
+    let va=a[invSortCol],vb=b[invSortCol];
+    if(va==null)va=invSortDir>0?Infinity:-Infinity;
+    if(vb==null)vb=invSortDir>0?Infinity:-Infinity;
+    if(typeof va==="string")return invSortDir*va.localeCompare(vb);
+    return invSortDir*(va-vb);
+  });
+  const win=sorted.filter(r=>r.usable&&r.delta>0);
+  const gain=win.reduce((s,r)=>s+r.delta,0);
+  const best=win.slice().sort((a,b)=>b.delta-a.delta)[0];
+  $("invCards").innerHTML=`
+    <div class="card"><div class="v">Posten</div><div class="nm">${sorted.length}</div><div class="px">reprocessbar im Bestand</div></div>
+    <div class="card"><div class="v">Zerlegen lohnt</div><div class="nm" style="color:var(--green)">${win.length}</div><div class="px">schlägt Direktverkauf</div></div>
+    <div class="card"><div class="v">Mehrertrag</div><div class="nm" style="color:var(--gold)">${fmtISK(gain)}</div><div class="px">durch Zerlegen statt Verkauf</div></div>
+    <div class="card"><div class="v">Top-Posten</div><div class="nm" style="color:var(--teal)">${best?esc(best.name):"–"}</div><div class="px">${best?"+"+fmtISK(best.delta):""}</div></div>`;
+  const tb=$("invBody");tb.innerHTML="";
+  for(const r of sorted){
+    const tr=document.createElement("tr");tr.className="mrow";
+    const warn=r.thin?' <span style="color:var(--red)" title="Buy-Markt zu dünn für die Menge">⚠</span>':'';
+    const kind=r.isOre?'<span class="dimv" style="font-size:8px"> Erz</span>':'';
+    tr.innerHTML=
+      `<td class="name"><span class="tog">▸</span>${esc(r.name)}${kind}${warn}</td>`+
+      `<td>${fmtNum(r.qty)}</td>`+
+      `<td class="dimv">${fmtNum(r.portion)}</td>`+
+      `<td class="dimv">${fmtNum(r.batches)}</td>`+
+      `<td>${fmtISK(r.sellNet)}</td>`+
+      `<td>${fmtISK(r.reprocNet)}</td>`+
+      `<td class="${pcls(r.delta)}"><b>${r.delta!=null?fmtISK(r.delta):"–"}</b></td>`+
+      `<td class="${pcls(r.deltaPct)}">${fmtPct(r.deltaPct)}</td>`+
+      `<td class="vd ${r.vcls}">${r.verdict}</td>`;
+    const dtr=document.createElement("tr");dtr.className="drow";
+    const matRows=r.details.map(m=>`<tr>
+      <td style="width:40%;color:var(--txt)">${esc(m.name)}</td>
+      <td><b style="color:var(--teal)">${fmtNum(m.recTotal)}</b> erhalten</td>
+      <td class="pos">${fmtISK(m.val)}${m.short?' <span style="color:var(--red)">⚠ Markt dünn</span>':''}</td>
+    </tr>`).join("");
+    dtr.innerHTML=`<td colspan="9" style="padding:0"><table class="dinn">${matRows}
+      <tr class="srow"><td>${fmtNum(r.batches)} Batches × Portion ${fmtNum(r.portion)} = ${fmtNum(r.units)} Units</td>
+      <td>Verkauf real: ${fmtISK(r.sellNet)}</td>
+      <td class="${pcls(r.delta)}">Zerlegen real: ${fmtISK(r.reprocNet)} → Δ ${r.delta!=null?fmtISK(r.delta):"–"}</td></tr>
+    </table></td>`;
+    let open=false;
+    tr.addEventListener("click",()=>{open=!open;dtr.style.display=open?"table-row":"none";tr.querySelector(".tog").textContent=open?"▾":"▸";});
+    tb.appendChild(tr);tb.appendChild(dtr);
+  }
+  document.querySelectorAll("th[data-icol]").forEach(th=>th.classList.toggle("act",th.dataset.icol===invSortCol));
+}
+function copyReprocList(){
+  const win=invResults.filter(r=>r.usable&&r.delta>0);
+  if(!win.length){$("invHint").textContent="Nichts zum Zerlegen empfohlen.";return;}
+  const txt=win.map(r=>r.name+" x"+r.units).join("\n");
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>{$("invHint").textContent="Reprocess-Liste kopiert ("+win.length+" Posten).";});
+  else{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");$("invHint").textContent="Reprocess-Liste kopiert.";}catch(e){}document.body.removeChild(ta);}
+}
+
 /* ===== Init ===== */
 (function(){
   const sel=$("hubSel");
   ALL_HUBS.forEach(h=>{const o=document.createElement("option");o.value=h.key;o.textContent=h.label;sel.appendChild(o);});
-  sel.addEventListener("change",()=>{HOME=HUBKEY[sel.value];});
+  sel.addEventListener("change",()=>{HOME=HUBKEY[sel.value];if(sso.access)resolveReprocTax();});
 
-  ["stBase","skR","skE","skS"].forEach(id=>{$(id).addEventListener("change",updateYield);});
+  ["stBase","skR","skE","skS","reprocTax"].forEach(id=>{$(id).addEventListener("change",updateYield);});
   updateYield();
 
   document.querySelectorAll("th[data-col]").forEach(th=>{
     th.addEventListener("click",()=>{
       if(sortCol===th.dataset.col)sortDir*=-1;else{sortCol=th.dataset.col;sortDir=-1;}
       if(scanResults.length)renderTable();
+    });
+  });
+  document.querySelectorAll("th[data-icol]").forEach(th=>{
+    th.addEventListener("click",()=>{
+      if(invSortCol===th.dataset.icol)invSortDir*=-1;else{invSortCol=th.dataset.icol;invSortDir=-1;}
+      if(invResults.length)renderInv();
     });
   });
 
