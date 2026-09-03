@@ -215,3 +215,85 @@ zusaetzlich eingetragen werden, sonst schlaegt der Login fehl.
   180 Tagen aus dem Netz.
 - TeamViewer/AnyDesk: unbeaufsichtigten Zugriff nur mit langem, eigenem
   Passwort, nicht mit dem Sitzungspasswort.
+
+## 11. Dein Fall konkret: Windows Pro, nichts installiert, niemand vor Ort
+
+Damit ist der direkte Weg zu. Bevor du aufgibst, drei Tueren, die schon offen
+sein koennten, ohne dass jemals etwas eingerichtet wurde - alle vom iPad aus
+in wenigen Minuten pruefbar, in dieser Reihenfolge:
+
+### 11.1 Steam Link (beste Chance)
+
+Wenn auf dem Rechner Steam laeuft (bei Windows-Spielern meist im Autostart),
+ist Steam Remote Play **standardmaessig aktiv** und funktioniert auch ueber
+das Internet, per Steam-Relay, ohne Portfreigabe.
+
+1. App "Steam Link" auf dem iPad installieren (kostenlos).
+2. Mit demselben Steam-Konto anmelden.
+3. Findet die App den Rechner, bist du drin: Big Picture Mode, und darueber
+   laesst sich jedes Spiel starten - EVE Online inklusive, wenn es ueber
+   Steam installiert ist.
+
+Das ist kein vollwertiger Desktop, aber es ist Bild, Ton, Maus und Tastatur.
+Und: von einer laufenden Steam-Sitzung aus kommt man an einen Browser bzw.
+ueber ein als "Nicht-Steam-Spiel" hinterlegtes Programm auch weiter - falls
+so ein Eintrag schon existiert, ist das die Bruecke, um Abschnitt 5 nachtraeglich
+zu installieren.
+
+### 11.2 VPN des Routers
+
+Viele Router bringen VPN mit, das ohne Zutun des PCs funktioniert:
+
+- **FRITZ!Box**: MyFRITZ-Konto -> WireGuard/VPN-Zugang; Konfiguration geht
+  komplett ueber `myfritz.net` im Safari, der PC ist daran unbeteiligt.
+- **UniFi**: Teleport/WireGuard ueber die UniFi-App.
+- **Speedport/Vodafone Station**: meist kein brauchbares VPN.
+
+Bist du damit im LAN, teste mit der App "Windows App" (Microsoft) eine
+RDP-Verbindung auf die lokale IP des PCs. Das klappt nur, wenn Remotedesktop
+dort irgendwann einmal eingeschaltet wurde - probieren kostet zwei Minuten.
+
+### 11.3 Ein anderes Geraet im selben Netz
+
+Ein Synology/QNAP-NAS mit QuickConnect, ein Raspberry Pi mit offenem SSH, ein
+Home-Assistant-Server: alles davon ist ein Brueckenkopf im LAN. Von dort aus
+Wake-on-LAN an den PC schicken - und wenn auf dem PC RDP an ist, weiter per
+RDP. Ohne aktiviertes RDP hilft aber auch das nicht.
+
+### 11.4 Wenn alle drei zu sind
+
+Dann bis zur Rueckkehr mit Abschnitt 9 arbeiten (dieses Tool laeuft im
+iPad-Browser) und den PC bei naechster Gelegenheit einmal richtig aufsetzen.
+
+### 11.5 Das 5-Minuten-Skript fuer den Moment, in dem du wieder am PC bist
+
+PowerShell **als Administrator** oeffnen, einmal einfuegen, fertig:
+
+```powershell
+# 1) Tailscale (Mesh-VPN, keine Portfreigabe noetig)
+winget install --id tailscale.tailscale -e --accept-source-agreements
+
+# 2) Remotedesktop aktivieren (Windows Pro)
+Set-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' `
+  -Name fDenyTSConnections -Value 0
+Enable-NetFirewallRule -DisplayGroup "Remotedesktop"
+
+# 3) OpenSSH-Server als zweites, unabhaengiges Standbein
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Set-Service -Name sshd -StartupType Automatic
+Start-Service sshd
+
+# 4) Standby aus, sonst ist der Rechner aus der Ferne tot
+powercfg /change standby-timeout-ac 0
+powercfg /change hibernate-timeout-ac 0
+
+# 5) Anmelden - oeffnet den Browser
+tailscale up
+```
+
+Danach auf dem iPad: Tailscale-App + "Windows App", beide mit demselben Konto
+bzw. dem Tailscale-Namen des Rechners. Ab da bist du von ueberall drin.
+
+Zusaetzlich im Tailscale-Adminpanel unter *Machines* fuer den PC
+**"Disable key expiry"** setzen - sonst faellt er nach 180 Tagen genau dann
+aus dem Netz, wenn du wieder unterwegs bist.
